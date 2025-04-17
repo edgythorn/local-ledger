@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, NavLink, Link } from "react-router-dom";
 import { Home, List, BarChart2 } from "lucide-react";
 import { JSX } from "react";
 
@@ -8,7 +8,7 @@ function App() {
       <div className="flex h-screen bg-gray-50 text-gray-800">
         {/* Sidebar */}
         <aside className="w-64 bg-white p-6 border-r shadow-sm">
-          <div className="text-2xl font-bold text-blue-600 mb-6">LocalLedger</div>
+          <Header />
           <nav className="space-y-2">
             <NavItem to="/" icon={<Home className="w-5 h-5" />} label="Главная" />
             <NavItem to="/operations" icon={<List className="w-5 h-5" />} label="Операции" />
@@ -29,14 +29,27 @@ function App() {
   );
 }
 
+function Header() {
+  return (
+    <header className="p-4 shadow bg-white">
+      <Link
+        to="/"
+        className="text-3xl font-black tracking-tight text-indigo-600 hover:no-underline hover:opacity-80 transition-opacity"
+      >
+        LocalLedger
+      </Link>
+
+    </header>
+  );
+}
+
 // Выделяем компонент для ссылок
 function NavItem({ to, icon, label }: { to: string; icon: JSX.Element; label: string }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center gap-3 p-2 rounded-lg font-medium transition-colors duration-200 ${
-          isActive ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"
+        `flex items-center gap-3 p-2 rounded-lg font-medium transition-colors duration-200 ${isActive ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"
         }`
       }
     >
