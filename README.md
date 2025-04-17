@@ -8,4 +8,7 @@ Local Ledger is a browser-based application for simple financial accounting and 
 docker compose -f docker/docker-compose.yml up --build -d
 ```
 
-Launch http://localhost:3000
+ Launch http://localhost:3000
+
+## Screens
+![Главная страница](doc/screen.png "Title")
