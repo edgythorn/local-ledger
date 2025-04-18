@@ -1,0 +1,15 @@
+{
+  "appName": "LocalLedger",
+  "home": "Home",
+  "operations": "Operations",
+  "reports": "Reports",
+  "dashboard": "Dashboard",
+  "accountSummary": "Account Summary",
+  "recentTransactions": "Recent Transactions",
+  "charts": "Charts",
+  "transactions": "Transactions",
+  "filters": "Filters",
+  "operationExample1": "Transaction #1",
+  "operationExample2": "Transaction #2",
+  "reportsList": "Reports List / Search"
+}

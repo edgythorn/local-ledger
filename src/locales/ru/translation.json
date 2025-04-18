@@ -1,0 +1,15 @@
+{
+  "appName": "LocalLedger",
+  "home": "Главная",
+  "operations": "Операции",
+  "reports": "Отчёты",
+  "dashboard": "Дашборд",
+  "accountSummary": "Сводка по счетам",
+  "recentTransactions": "Последние операции",
+  "charts": "Графики",
+  "transactions": "Операции",
+  "filters": "Фильтры",
+  "operationExample1": "Операция 1",
+  "operationExample2": "Операция 2",
+  "reportsList": "Список отчетов / поиск"
+}
