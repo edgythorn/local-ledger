@@ -1,8 +1,13 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink, Link } from 'react-router-dom';
 import { Home, List, BarChart2 } from 'lucide-react';
 import './i18n';
 import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { Reports } from './components/Reports';
+import { Operations } from './components/Operations';
+import { Dashboard } from './components/Dashboard';
+import { Header } from './components/Header';
+import { NavItem } from './components/NavItem';
 
 
 function App() {
@@ -38,85 +43,6 @@ function App() {
         </main>
       </div>
     </Router>
-  );
-}
-function Header() {
-  const { t } = useTranslation();
-  return (
-    <header className="header">
-      <Link to="/" className="logo">
-        {t('appName')}
-      </Link>
-    </header>
-  );
-}
-
-function NavItem({ to, icon, label }: { to: string; icon: JSX.Element; label: string }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `flex items-center gap-3 p-2 rounded-lg text-base font-medium transition-colors duration-200 ${
-          isActive ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-        }`
-      }
-    >
-      {icon}
-      {label}
-    </NavLink>
-  );
-}
-
-function Dashboard() {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-semibold">{t('dashboard')}</h1>
-      <Card>{t('accountSummary')}</Card>
-      <Card>{t('recentTransactions')}</Card>
-      <Card>{t('charts')}</Card>
-    </div>
-  );
-}
-
-function Operations() {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-semibold">{t('transactions')}</h1>
-      <div className="text-gray-600">{t('filters')}</div>
-      <Card>{t('operationExample1')}</Card>
-      <Card>{t('operationExample2')}</Card>
-    </div>
-  );
-}
-
-function Reports() {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-semibold">{t('reports')}</h1>
-      <Card>{t('reportsList')}</Card>
-    </div>
-  );
-}
-
-function Card({ children }: { children: React.ReactNode }) {
-  return <div className="card">{children}</div>;
-}
-
-function LanguageSwitcher({ changeLang }: { changeLang: (lng: 'ru' | 'en') => void }) {
-  return (
-    <div className="flex space-x-2">
-      <button onClick={() => changeLang('ru')} className="flex items-center gap-1">
-        <span role="img" aria-label="Russian flag">🇷🇺</span>
-        <span className="text-sm">RU</span>
-      </button>
-      <button onClick={() => changeLang('en')} className="flex items-center gap-1">
-        <span role="img" aria-label="UK flag">🇬🇧</span>
-        <span className="text-sm">EN</span>
-      </button>
-    </div>
   );
 }
 
