@@ -1,6 +1,7 @@
-import React, { JSX } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink, Link } from 'react-router-dom';
 import { Home, List, BarChart2 } from 'lucide-react';
+import './i18n';
 import { useTranslation } from 'react-i18next';
 
 
@@ -13,24 +14,22 @@ function App() {
 
   return (
     <Router>
-      <div className="flex h-screen bg-gray-50 text-gray-800">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white p-6 border-r shadow-sm flex flex-col">
+      <div className="app-container">
+        <aside className="sidebar">
           <Header />
 
-          <nav className="flex-1 space-y-2 mt-4">
+          <nav className="nav-list">
             <NavItem to="/" icon={<Home className="w-5 h-5" />} label={t('home')} />
             <NavItem to="/operations" icon={<List className="w-5 h-5" />} label={t('operations')} />
             <NavItem to="/reports" icon={<BarChart2 className="w-5 h-5" />} label={t('reports')} />
           </nav>
 
-          <div className="mt-auto">
+          <div className="language-switcher">
             <LanguageSwitcher changeLang={changeLang} />
           </div>
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 p-8 overflow-y-auto">
+        <main className="main-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/operations" element={<Operations />} />
@@ -41,15 +40,11 @@ function App() {
     </Router>
   );
 }
-
 function Header() {
   const { t } = useTranslation();
   return (
-    <header className="p-4 shadow bg-white">
-      <Link
-        to="/"
-        className="text-3xl font-black tracking-tight text-indigo-600 hover:opacity-80 transition-opacity"
-      >
+    <header className="header">
+      <Link to="/" className="logo">
         {t('appName')}
       </Link>
     </header>
@@ -107,32 +102,18 @@ function Reports() {
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-      {children}
-    </div>
-  );
+  return <div className="card">{children}</div>;
 }
 
 function LanguageSwitcher({ changeLang }: { changeLang: (lng: 'ru' | 'en') => void }) {
   return (
     <div className="flex space-x-2">
-      <button
-        onClick={() => changeLang('ru')}
-        className="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200"
-      >
-        <span role="img" aria-label="Russian flag">
-          🇷🇺
-        </span>
+      <button onClick={() => changeLang('ru')} className="flex items-center gap-1">
+        <span role="img" aria-label="Russian flag">🇷🇺</span>
         <span className="text-sm">RU</span>
       </button>
-      <button
-        onClick={() => changeLang('en')}
-        className="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200"
-      >
-        <span role="img" aria-label="UK flag">
-          🇺🇸
-        </span>
+      <button onClick={() => changeLang('en')} className="flex items-center gap-1">
+        <span role="img" aria-label="UK flag">🇬🇧</span>
         <span className="text-sm">EN</span>
       </button>
     </div>
