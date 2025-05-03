@@ -1,40 +1,18 @@
-import { BrowserRouter as Router, Routes, Route, NavLink, Link } from 'react-router-dom';
-import { Home, List, BarChart2 } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './index.css';
 import './i18n';
-import { useTranslation } from 'react-i18next';
-import { LanguageSwitcher } from './components/LanguageSwitcher';
-import { Reports } from './components/Reports';
-import { Operations } from './components/Operations';
+import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
-import { Header } from './components/Header';
-import { NavItem } from './components/NavItem';
+import { Operations } from './components/Operations';
+import { Reports } from './components/Reports';
 
-
-function App() {
-  const { t, i18n } = useTranslation();
-
-  const changeLang = (lng: 'ru' | 'en') => {
-    i18n.changeLanguage(lng);
-  };
-
+export default function App() {
   return (
     <Router>
-      <div className="app-container">
-        <aside className="sidebar">
-          <Header />
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
 
-          <nav className="nav-list">
-            <NavItem to="/" icon={<Home className="w-5 h-5" />} label={t('home')} />
-            <NavItem to="/operations" icon={<List className="w-5 h-5" />} label={t('operations')} />
-            <NavItem to="/reports" icon={<BarChart2 className="w-5 h-5" />} label={t('reports')} />
-          </nav>
-
-          <div className="language-switcher">
-            <LanguageSwitcher changeLang={changeLang} />
-          </div>
-        </aside>
-
-        <main className="main-content">
+        <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/operations" element={<Operations />} />
@@ -45,5 +23,3 @@ function App() {
     </Router>
   );
 }
-
-export default App;

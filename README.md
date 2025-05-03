@@ -11,4 +11,9 @@ docker compose -f docker/docker-compose.yml up --build -d
  Launch http://localhost:3000
 
 ## Screens
-![Главная страница](doc/screen.png "Title")
+
+### Laptop
+![Main page](doc/screen-home.png "Title")
+
+### Mobile
+![Main page (mobile version)](doc/screen-nome-mob.png "Title")
