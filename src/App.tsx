@@ -9,7 +9,7 @@ import { Reports } from './components/Reports';
 export default function App() {
   return (
     <Router>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
         <Sidebar />
 
         <main className="flex-1 p-8 overflow-y-auto">

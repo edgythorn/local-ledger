@@ -17,3 +17,6 @@ docker compose -f docker/docker-compose.yml up --build -d
 
 ### Mobile
 ![Main page (mobile version)](doc/screen-nome-mob.png "Title")
+
+### Mobile dark
+![Main page (mobile version, dark)](doc/screen-nome-mob-dark.png "Title")

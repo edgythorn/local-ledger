@@ -3,6 +3,7 @@ import { Home, List, BarChart2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Logo from './Logo';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Sidebar() {
     const { t } = useTranslation();
@@ -46,6 +47,12 @@ export function Sidebar() {
 
             <div className="mt-auto flex items-center justify-start space-x-2">
                 <LanguageSwitcher />
+                <div className="hidden lg:block">
+                    <ThemeToggle />
+                </div>
+            </div>
+            <div className="py-2 block lg:hidden">
+                <ThemeToggle />
             </div>
         </aside>
     );
