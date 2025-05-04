@@ -11,5 +11,11 @@
   "filters": "Фильтры",
   "operationExample1": "Операция 1",
   "operationExample2": "Операция 2",
-  "reportsList": "Список отчетов / поиск"
+  "reportsList": "Список отчетов / поиск",
+  "status": "Статус",
+  "status.periodic": "Запланированная периодическая операция",
+  "date": "Дата",
+  "amount": "Сумма",
+  "description": "Описание",
+  "balance": "Баланс"
 }

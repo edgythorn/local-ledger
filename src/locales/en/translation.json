@@ -11,5 +11,11 @@
   "filters": "Filters",
   "operationExample1": "Transaction #1",
   "operationExample2": "Transaction #2",
-  "reportsList": "Reports List / Search"
+  "reportsList": "Reports List / Search",
+  "status": "Status",
+  "status.periodic": "Planned periodic transaction",
+  "date": "Date",
+  "amount": "Amount",
+  "description": "Description",
+  "balance": "Balance"
 }

@@ -13,10 +13,10 @@ docker compose -f docker/docker-compose.yml up --build -d
 ## Screens
 
 ### Laptop
-![Main page](doc/screen-home.png "Title")
+![Operations page](doc/screen-operations.png "Title")
 
 ### Mobile
-![Main page (mobile version)](doc/screen-nome-mob.png "Title")
+![Operations page (dark)](doc/screen-operations-mob.png "Title")
 
 ### Mobile dark
-![Main page (mobile version, dark)](doc/screen-nome-mob-dark.png "Title")
+![Operations page (mobile version, dark)](doc/screen-operations-mob-dark.png "Title")
