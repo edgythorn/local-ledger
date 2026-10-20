@@ -37,6 +37,7 @@ export function OperationsPage() {
   const [error, setError] = useState('');
   const [reconcileBalance, setReconcileBalance] = useState('');
   const [showReconcile, setShowReconcile] = useState(false);
+  const [confirmOverdueDuringReconciliation, setConfirmOverdueDuringReconciliation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const today = localDateString(new Date());
@@ -125,15 +126,35 @@ export function OperationsPage() {
       return;
     }
     const delta = actualBalance - projectedBalanceToday;
-    persist([...operations, {
+    let next = [...operations];
+    if (confirmOverdueDuringReconciliation) {
+      const confirmableIds = new Set(overdue.filter((item) => !item.virtual).map((item) => item.id));
+      const virtualOverdue = overdue.filter((item) => item.virtual);
+      next = next.map((operation) => confirmableIds.has(operation.id) ? { ...operation, type: 'actual' } : operation);
+      for (const item of virtualOverdue) {
+        next.push({
+          id: createId('operation'),
+          date: item.date,
+          amount: item.amount,
+          description: item.description,
+          category: item.category,
+          type: 'actual',
+          periodicRuleId: item.periodicRuleId,
+          occurrenceDate: item.occurrenceDate,
+        });
+      }
+    }
+    next.push({
       id: createId('adjustment'),
       date: today,
       amount: delta,
       description: t('operations.balanceAdjustment'),
       type: 'adjustment',
-    }]);
+    });
+    persist(next);
     setShowReconcile(false);
     setReconcileBalance('');
+    setConfirmOverdueDuringReconciliation(false);
     setError('');
   }
 
@@ -191,6 +212,7 @@ export function OperationsPage() {
           <div><p className="text-sm text-muted-foreground">{t('operations.projectedBalance')}</p><p className="text-xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p></div>
           <label className="grid gap-1 text-sm">{t('operations.actualBalance')}<Input type="number" step="any" required value={reconcileBalance} onChange={(event) => setReconcileBalance(event.target.value)} /></label>
           <Button type="submit">{t('operations.createAdjustment')}</Button>
+          {overdue.length > 0 && <label className="flex items-center gap-2 text-sm md:col-span-3"><input type="checkbox" checked={confirmOverdueDuringReconciliation} onChange={(event) => setConfirmOverdueDuringReconciliation(event.target.checked)} />{t('operations.confirmOverdueDuringReconciliation', { count: overdue.length })}</label>}
           <p className="text-sm text-muted-foreground md:col-span-3">{t('operations.reconcileHint')}</p>
           {error && <p role="alert" className="text-sm text-destructive md:col-span-3">{error}</p>}
         </form>

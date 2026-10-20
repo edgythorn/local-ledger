@@ -38,6 +38,7 @@
   "operations.actualBalance": "Фактический баланс",
   "operations.createAdjustment": "Создать корректировку",
   "operations.reconcileHint": "Будет создана корректировка на разницу. Нулевая корректировка тоже сохраняется как контрольная точка.",
+  "operations.confirmOverdueDuringReconciliation": "Также подтвердить {{count}} просроченных операций как фактически исполненные",
   "operations.overdue": "Просроченных планируемых операций: {{count}}",
   "operations.overdueHint": "Подтвердите операции, которые действительно состоялись. Будущие операции подтверждать нельзя.",
   "operations.confirmAllPast": "Подтвердить все просроченные",

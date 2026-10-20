@@ -38,6 +38,7 @@
   "operations.actualBalance": "Actual balance",
   "operations.createAdjustment": "Create adjustment",
   "operations.reconcileHint": "An adjustment for the difference will be created. A zero adjustment is saved as a checkpoint too.",
+  "operations.confirmOverdueDuringReconciliation": "Also confirm {{count}} overdue operations as actually completed",
   "operations.overdue": "Overdue planned operations: {{count}}",
   "operations.overdueHint": "Confirm only operations that really happened. Future operations cannot be confirmed.",
   "operations.confirmAllPast": "Confirm all overdue",
