@@ -67,7 +67,8 @@ export function OperationsPage() {
 
   function confirmPlanned(items: TimelineOperation[]) {
     const confirmable = items.filter((item) => item.type === 'planned' && item.date <= today);
-    const next = [...operations];
+    const confirmableIds = new Set(confirmable.filter((item) => !item.virtual).map((item) => item.id));
+    const next = operations.map((operation) => confirmableIds.has(operation.id) ? { ...operation, type: 'actual' as const } : operation);
     for (const item of confirmable) {
       if (item.virtual) {
         next.push({
@@ -80,9 +81,6 @@ export function OperationsPage() {
           periodicRuleId: item.periodicRuleId,
           occurrenceDate: item.occurrenceDate,
         });
-      } else {
-        const saved = next.find((operation) => operation.id === item.id);
-        if (saved) saved.type = 'actual';
       }
     }
     persist(next);
