@@ -1,4 +1,4 @@
-import periodicOpsSeed from '../../../data/periodicOps.json';
+import periodicOpsSeed from '../../../shared/data/periodicOps.json';
 import type { Operation, PeriodicOperation } from './types';
 
 const OPERATIONS_KEY = 'local-ledger:operations:v1';
