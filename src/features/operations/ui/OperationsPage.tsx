@@ -130,7 +130,7 @@ export function OperationsPage() {
     if (confirmOverdueDuringReconciliation) {
       const confirmableIds = new Set(overdue.filter((item) => !item.virtual).map((item) => item.id));
       const virtualOverdue = overdue.filter((item) => item.virtual);
-      next = next.map((operation) => confirmableIds.has(operation.id) ? { ...operation, type: 'actual' } : operation);
+      next = next.map((operation) => confirmableIds.has(operation.id) ? { ...operation, type: 'actual' as const } : operation);
       for (const item of virtualOverdue) {
         next.push({
           id: createId('operation'),
