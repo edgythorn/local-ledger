@@ -1,5 +1,5 @@
 // src/services/operationsService.ts
-import periodicSpecs from '../data/periodicOps.json';
+import periodicSpecs from '../shared/data/periodicOps.json';
 
 export interface Operation {
   id: string;
