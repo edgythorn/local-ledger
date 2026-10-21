@@ -1,11 +1,5 @@
-import type { Operation, PeriodicOperation, TimelineOperation } from './types';
-
-export function localDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+import type { LedgerSettings, Operation, PeriodicOperation, TimelineOperation } from './types';
+import { localDateString } from './dates';
 
 function dateAtMonthDay(year: number, month: number, day: number): string {
   const lastDay = new Date(year, month + 1, 0).getDate();
@@ -21,6 +15,7 @@ function compareOperations(a: Operation, b: Operation): number {
 export function buildTimeline(
   savedOperations: Operation[],
   periodicRules: PeriodicOperation[],
+  settings: LedgerSettings,
   now = new Date(),
   forecastMonths = 12,
 ): TimelineOperation[] {
@@ -29,10 +24,10 @@ export function buildTimeline(
     (earliest, operation) => !earliest || operation.date < earliest ? operation.date : earliest,
     undefined,
   );
-  // If the only saved operations are in the future, still show this month's due rules.
-  const startDate = earliestSavedDate && earliestSavedDate <= today
+  // New ledgers start today. A backdated operation extends the ledger into the past.
+  const startDate = earliestSavedDate && earliestSavedDate < settings.openingBalanceDate
     ? earliestSavedDate
-    : localDateString(new Date(now.getFullYear(), now.getMonth(), 1));
+    : settings.openingBalanceDate;
   const start = new Date(`${startDate}T12:00:00`);
   const end = new Date(now.getFullYear(), now.getMonth() + forecastMonths, 1);
   const confirmedOccurrences = new Set(
@@ -60,7 +55,7 @@ export function buildTimeline(
   }
 
   all.sort(compareOperations);
-  let balance = 0;
+  let balance = settings.openingBalance;
   return all.map((operation) => {
     balance += operation.amount;
     return { ...operation, virtual: operation.id.startsWith('virtual:'), balance };
