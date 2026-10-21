@@ -199,11 +199,11 @@ export function OperationsPage() {
           <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
           {ledgerSettings.checkpoints.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].date + 'T12:00:00')), balance: numberFormatter.format(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].actualBalance) })}</p>}
           {ledgerSettings.checkpoints.length === 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
+          <Button className="mt-2 h-auto px-0 py-1 text-xs" variant="link" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }}>{t('operations.editOpeningBalance')}</Button>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => { setReconcileBalance(String(projectedBalanceToday)); setConfirmOverdueDuringReconciliation(false); setShowOpeningBalance(false); setShowReconcile((value) => !value); setError(''); }} aria-label={t('operations.confirmBalance')} title={t('operations.confirmBalance')}>✓</Button>
           <Button variant="outline" onClick={() => { setReconcileBalance(''); setShowOpeningBalance(false); setShowReconcile((value) => !value); setError(''); }} aria-label={t('operations.adjustBalance')} title={t('operations.adjustBalance')}>✎</Button>
-          <Button variant="outline" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }} aria-label={t('operations.editOpeningBalance')} title={t('operations.editOpeningBalance')}>✎</Button>
         </div>
         {showOpeningBalance && (
           <form onSubmit={saveOpeningBalance} className="mt-3 grid w-full gap-3 border-t pt-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
@@ -268,9 +268,9 @@ export function OperationsPage() {
         </form>
       )}
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto rounded-lg border">
-        <table className="w-full min-w-[700px] table-auto text-sm">
-          <colgroup><col className="w-[64px] min-w-[64px]" /><col className="w-[124px] min-w-[124px]" /><col className="w-full min-w-[100px]" /><col className="min-w-[100px]" /><col className="min-w-[110px]" /></colgroup>
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-lg border">
+        <table className="w-full min-w-[560px] table-fixed text-sm">
+          <colgroup><col className="w-[52px]" /><col className="w-[104px]" /><col /><col className="w-[88px]" /><col className="w-[96px]" /></colgroup>
           <thead className="sticky top-0 z-10 bg-muted">
             <tr><th className="px-3 py-2 text-left">{t('status')}</th><th className="px-3 py-2 text-left">{t('date')}</th><th className="px-3 py-2 text-left">{t('description')}</th><th className="px-3 py-2 text-right">{t('amount')}</th><th className="px-3 py-2 text-right">{t('balance')}</th></tr>
           </thead>
@@ -293,7 +293,7 @@ export function OperationsPage() {
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</td>
-                    <td className="max-w-0 overflow-hidden px-3 py-2"><div className="truncate" title={operation.description}>{operation.description}</div>{operation.category && <div className="truncate text-xs text-muted-foreground" title={operation.category}>{operation.category}</div>}</td>
+                    <td className="overflow-hidden px-2 py-2"><div className="truncate" title={operation.description}>{operation.description}</div>{operation.category && <div className="truncate text-xs text-muted-foreground" title={operation.category}>{operation.category}</div>}</td>
                     <td className={`px-3 py-2 text-right tabular-nums ${operation.amount < 0 ? 'text-red-600' : operation.amount > 0 ? 'text-green-600' : ''}`}>{numberFormatter.format(operation.amount)}</td>
                     <td className={`px-3 py-2 text-right tabular-nums ${operation.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(operation.balance)}</td>
                   </tr>
