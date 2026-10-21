@@ -62,5 +62,10 @@
   "operations.lastConfirmed": "Last confirmed: {{date}}, {{balance}}",
   "operations.openingBalanceLabel": "Opening balance from {{date}}",
   "operations.monthNet": "Net",
-  "operations.monthEndBalance": "Closing balance"
+  "operations.monthEndBalance": "Closing balance",
+  "operations.editOpeningBalance": "Opening balance and date",
+  "operations.openingBalanceAmount": "Opening balance",
+  "operations.openingBalanceDate": "Ledger start date",
+  "operations.monthIncome": "Income",
+  "operations.monthExpenses": "Expenses"
 }
