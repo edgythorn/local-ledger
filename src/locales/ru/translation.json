@@ -60,5 +60,7 @@
   "operations.confirmBalance": "Подтвердить баланс",
   "operations.adjustBalance": "Скорректировать баланс",
   "operations.lastConfirmed": "Последнее подтверждение: {{date}}, {{balance}}",
-  "operations.openingBalanceLabel": "Начальный баланс с {{date}}"
+  "operations.openingBalanceLabel": "Начальный баланс с {{date}}",
+  "operations.monthNet": "Итого",
+  "operations.monthEndBalance": "Остаток"
 }
