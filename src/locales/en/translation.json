@@ -60,5 +60,7 @@
   "operations.confirmBalance": "Confirm balance",
   "operations.adjustBalance": "Adjust balance",
   "operations.lastConfirmed": "Last confirmed: {{date}}, {{balance}}",
-  "operations.openingBalanceLabel": "Opening balance from {{date}}"
+  "operations.openingBalanceLabel": "Opening balance from {{date}}",
+  "operations.monthNet": "Net",
+  "operations.monthEndBalance": "Closing balance"
 }
