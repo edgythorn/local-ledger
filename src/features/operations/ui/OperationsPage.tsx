@@ -2,7 +2,8 @@ import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from '
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { buildTimeline, localDateString } from '../../../entities/operation/model/timeline';
+import { buildTimeline } from '../../../entities/operation/model/timeline';
+import { localDateString } from '../../../entities/operation/model/dates';
 import {
   createId,
   getOperations,
