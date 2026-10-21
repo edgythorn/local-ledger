@@ -55,8 +55,13 @@ export function buildTimeline(
   }
 
   all.sort(compareOperations);
-  let balance = settings.openingBalance;
+  let balance = startDate < settings.openingBalanceDate ? 0 : settings.openingBalance;
+  let appliedOpeningBalance = startDate >= settings.openingBalanceDate;
   return all.map((operation) => {
+    if (!appliedOpeningBalance && operation.date >= settings.openingBalanceDate) {
+      balance = settings.openingBalance;
+      appliedOpeningBalance = true;
+    }
     balance += operation.amount;
     return { ...operation, virtual: operation.id.startsWith('virtual:'), balance };
   });
