@@ -62,5 +62,10 @@
   "operations.lastConfirmed": "Последнее подтверждение: {{date}}, {{balance}}",
   "operations.openingBalanceLabel": "Начальный баланс с {{date}}",
   "operations.monthNet": "Итого",
-  "operations.monthEndBalance": "Остаток"
+  "operations.monthEndBalance": "Остаток",
+  "operations.editOpeningBalance": "Начальный баланс и дата",
+  "operations.openingBalanceAmount": "Начальный баланс",
+  "operations.openingBalanceDate": "Дата начала учёта",
+  "operations.monthIncome": "Приход",
+  "operations.monthExpenses": "Расход"
 }
