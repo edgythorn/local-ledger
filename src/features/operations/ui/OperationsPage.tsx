@@ -248,7 +248,13 @@ export function OperationsPage() {
               const previousMonth = previous?.date.slice(0, 7);
               return (
                 <Fragment key={operation.id}>
-                  {(!previous || previousMonth !== month) && <tr><td colSpan={5} className="bg-muted/60 px-3 py-2 font-medium">{dateFormatter.format(new Date(`${month}-15T12:00:00`))}</td></tr>}
+                  {(!previous || previousMonth !== month) && (() => {
+                    const monthOperations = timeline.filter((item) => item.date.slice(0, 7) === month);
+                    const income = monthOperations.reduce((sum, item) => sum + Math.max(0, item.amount), 0);
+                    const expenses = monthOperations.reduce((sum, item) => sum + Math.min(0, item.amount), 0);
+                    const monthEndBalance = monthOperations[monthOperations.length - 1]?.balance ?? ledgerSettings.openingBalance;
+                    return <tr><td colSpan={5} className="bg-muted/60 px-3 py-2"><div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-medium"><span>{new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(new Date(`${month}-15T12:00:00`))}</span><span className="text-green-600">+{numberFormatter.format(income)}</span><span className="text-red-600">{numberFormatter.format(expenses)}</span><span>{t('operations.monthNet')}: {numberFormatter.format(income + expenses)}</span><span className="ml-auto">{t('operations.monthEndBalance')}: {numberFormatter.format(monthEndBalance)}</span></div></td></tr>;
+                  })()}
                   {isTodayMarker && <tr id="today-marker"><td colSpan={5} className="border-y-2 border-primary bg-primary/10 px-3 py-2 font-semibold">{t('operations.today')}</td></tr>}
                   <tr className={operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
                     <td className="px-3 py-2">
@@ -256,7 +262,7 @@ export function OperationsPage() {
                         {operation.type === 'actual' ? '●' : operation.type === 'planned' ? '◷' : '↔'}
                         <span>{t(`operations.${operation.type}`)}</span>
                       </div>
-                      {operation.type === 'planned' && operation.date <= today && <label className="mt-1 flex items-center gap-1 text-xs"><input type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} />{t('operations.select')}</label>}
+                      {operation.type === 'planned' && operation.date <= today && <label className="mt-1 flex items-center gap-1 text-xs" title={t('operations.select')}><input aria-label={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} /></label>}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</td>
                     <td className="px-3 py-2"><div>{operation.description}</div>{operation.category && <div className="text-xs text-muted-foreground">{operation.category}</div>}</td>
