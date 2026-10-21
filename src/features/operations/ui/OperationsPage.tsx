@@ -6,10 +6,12 @@ import { buildTimeline, localDateString } from '../../../entities/operation/mode
 import {
   createId,
   getOperations,
+  getLedgerSettings,
   getPeriodicOperations,
+  saveLedgerSettings,
   saveOperations,
 } from '../../../entities/operation/model/storage';
-import type { Operation, OperationType, TimelineOperation } from '../../../entities/operation/model/types';
+import type { LedgerSettings, Operation, OperationType, TimelineOperation } from '../../../entities/operation/model/types';
 
 interface OperationFormState {
   date: string;
@@ -30,6 +32,7 @@ const emptyForm = (): OperationFormState => ({
 export function OperationsPage() {
   const { t, i18n } = useTranslation();
   const [operations, setOperations] = useState<Operation[]>(() => getOperations());
+  const [ledgerSettings, setLedgerSettings] = useState<LedgerSettings>(() => getLedgerSettings());
   const [periodicRules] = useState(() => getPeriodicOperations());
   const [form, setForm] = useState<OperationFormState>(emptyForm);
   const [showForm, setShowForm] = useState(false);
@@ -41,11 +44,11 @@ export function OperationsPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const today = localDateString(new Date());
-  const timeline = useMemo(() => buildTimeline(operations, periodicRules), [operations, periodicRules]);
+  const timeline = useMemo(() => buildTimeline(operations, periodicRules, ledgerSettings), [operations, periodicRules, ledgerSettings]);
   const overdue = timeline.filter((operation) => operation.type === 'planned' && operation.date <= today);
   const projectedBalanceToday = timeline
     .filter((operation) => operation.date <= today)
-    .reduce((sum, operation) => sum + operation.amount, 0);
+    .reduce((latest, operation) => operation.balance, ledgerSettings.openingBalance);
 
   useEffect(() => {
     document.getElementById('today-marker')?.scrollIntoView({ block: 'center' });
@@ -150,6 +153,10 @@ export function OperationsPage() {
       type: 'adjustment',
     });
     persist(next);
+    const checkpoint = { id: createId('checkpoint'), date: today, actualBalance, calculatedBalance: projectedBalanceToday, difference: delta };
+    const nextSettings = { ...ledgerSettings, checkpoints: [...ledgerSettings.checkpoints, checkpoint] };
+    setLedgerSettings(nextSettings);
+    saveLedgerSettings(nextSettings);
     setShowReconcile(false);
     setReconcileBalance('');
     setConfirmOverdueDuringReconciliation(false);
@@ -160,13 +167,24 @@ export function OperationsPage() {
 
   return (
     <section className="flex h-full min-h-0 flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4">
+        <div>
+          <p className="text-sm text-muted-foreground">{t('operations.currentBalance')}</p>
+          <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
+          {ledgerSettings.checkpoints.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].date + 'T12:00:00')), balance: numberFormatter.format(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].actualBalance) })}</p>}
+          {ledgerSettings.checkpoints.length === 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setReconcileBalance(String(projectedBalanceToday)); setConfirmOverdueDuringReconciliation(false); setShowReconcile(true); setError(''); }} aria-label={t('operations.confirmBalance')} title={t('operations.confirmBalance')}>✓</Button>
+          <Button variant="outline" onClick={() => { setReconcileBalance(''); setShowReconcile(true); setError(''); }} aria-label={t('operations.adjustBalance')} title={t('operations.adjustBalance')}>✎</Button>
+        </div>
+      </div>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('operations')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('operations.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => { setShowReconcile((value) => !value); setError(''); }}>{t('operations.reconcile')}</Button>
           <Button onClick={() => { setShowForm((value) => !value); setError(''); }}>{t('operations.add')}</Button>
         </div>
       </header>
