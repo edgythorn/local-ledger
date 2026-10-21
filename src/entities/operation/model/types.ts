@@ -23,3 +23,17 @@ export interface TimelineOperation extends Operation {
   virtual?: boolean;
   balance: number;
 }
+
+export interface BalanceCheckpoint {
+  id: string;
+  date: string;
+  actualBalance: number;
+  calculatedBalance: number;
+  difference: number;
+}
+
+export interface LedgerSettings {
+  openingBalance: number;
+  openingBalanceDate: string;
+  checkpoints: BalanceCheckpoint[];
+}
