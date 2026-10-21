@@ -69,6 +69,6 @@
   "operations.monthIncome": "Income",
   "operations.monthExpenses": "Expenses",
   "operations.beforeOpeningDate": "Operation date cannot be before the ledger start date ({{date}}).",
-  "operations.plannedMustBeFuture": "A planned operation can only be created for today or a future date.",
+  "operations.plannedMustBeFuture": "A planned operation cannot be created for a past date.",
   "operations.openingDateAfterOperation": "Ledger start date cannot be later than an existing operation dated {{date}}."
 }
