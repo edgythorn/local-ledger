@@ -203,7 +203,7 @@ export function OperationsPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => { setReconcileBalance(String(projectedBalanceToday)); setConfirmOverdueDuringReconciliation(false); setShowOpeningBalance(false); setShowReconcile((value) => !value); setError(''); }} aria-label={t('operations.confirmBalance')} title={t('operations.confirmBalance')}>✓</Button>
           <Button variant="outline" onClick={() => { setReconcileBalance(''); setShowOpeningBalance(false); setShowReconcile((value) => !value); setError(''); }} aria-label={t('operations.adjustBalance')} title={t('operations.adjustBalance')}>✎</Button>
-          <Button variant="outline" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }} aria-label={t('operations.editOpeningBalance')} title={t('operations.editOpeningBalance')}>⚙</Button>
+          <Button variant="outline" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }} aria-label={t('operations.editOpeningBalance')} title={t('operations.editOpeningBalance')}>✎</Button>
         </div>
         {showOpeningBalance && (
           <form onSubmit={saveOpeningBalance} className="mt-3 grid w-full gap-3 border-t pt-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
