@@ -49,7 +49,7 @@ export function OperationsPage() {
   const overdue = timeline.filter((operation) => operation.type === 'planned' && operation.date <= today);
   const projectedBalanceToday = timeline
     .filter((operation) => operation.date <= today)
-    .reduce((latest, operation) => operation.balance, ledgerSettings.openingBalance);
+    .at(-1)?.balance ?? ledgerSettings.openingBalance;
 
   useEffect(() => {
     document.getElementById('today-marker')?.scrollIntoView({ block: 'center' });
