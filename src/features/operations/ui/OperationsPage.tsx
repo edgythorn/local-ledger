@@ -185,12 +185,30 @@ export function OperationsPage() {
           <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
           {ledgerSettings.checkpoints.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].date + 'T12:00:00')), balance: numberFormatter.format(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].actualBalance) })}</p>}
           {ledgerSettings.checkpoints.length === 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
-          <button type="button" className="mt-2 text-xs text-primary underline-offset-4 hover:underline" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowOpeningBalance((value) => !value); setError(''); }}>{t('operations.editOpeningBalance')}</button>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setReconcileBalance(String(projectedBalanceToday)); setConfirmOverdueDuringReconciliation(false); setShowReconcile(true); setError(''); }} aria-label={t('operations.confirmBalance')} title={t('operations.confirmBalance')}>✓</Button>
-          <Button variant="outline" onClick={() => { setReconcileBalance(''); setShowReconcile(true); setError(''); }} aria-label={t('operations.adjustBalance')} title={t('operations.adjustBalance')}>✎</Button>
+          <Button variant="outline" onClick={() => { setReconcileBalance(String(projectedBalanceToday)); setConfirmOverdueDuringReconciliation(false); setShowOpeningBalance(false); setShowReconcile((value) => !value); setError(''); }} aria-label={t('operations.confirmBalance')} title={t('operations.confirmBalance')}>✓</Button>
+          <Button variant="outline" onClick={() => { setReconcileBalance(''); setShowOpeningBalance(false); setShowReconcile((value) => !value); setError(''); }} aria-label={t('operations.adjustBalance')} title={t('operations.adjustBalance')}>✎</Button>
+          <Button variant="outline" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }} aria-label={t('operations.editOpeningBalance')} title={t('operations.editOpeningBalance')}>⚙</Button>
         </div>
+        {showOpeningBalance && (
+          <form onSubmit={saveOpeningBalance} className="mt-3 grid w-full gap-3 border-t pt-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
+            <label className="grid gap-1 text-sm">{t('operations.openingBalanceAmount')}<Input type="number" step="any" required value={openingBalanceDraft} onChange={(event) => setOpeningBalanceDraft(event.target.value)} /></label>
+            <label className="grid gap-1 text-sm">{t('operations.openingBalanceDate')}<Input type="date" required value={openingDateDraft} onChange={(event) => setOpeningDateDraft(event.target.value)} /></label>
+            <div className="flex gap-2"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowOpeningBalance(false); setError(''); }}>{t('cancel')}</Button></div>
+            {error && <p role="alert" className="text-sm text-destructive md:col-span-3">{error}</p>}
+          </form>
+        )}
+        {showReconcile && (
+          <form onSubmit={saveReconciliation} className="mt-3 grid w-full gap-3 border-t pt-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
+            <div><p className="text-sm text-muted-foreground">{t('operations.projectedBalance')}</p><p className="text-xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p></div>
+            <label className="grid gap-1 text-sm">{t('operations.actualBalance')}<Input type="number" step="any" required value={reconcileBalance} onChange={(event) => setReconcileBalance(event.target.value)} /></label>
+            <Button type="submit">{t('operations.createAdjustment')}</Button>
+            {overdue.length > 0 && <label className="flex items-center gap-2 text-sm md:col-span-3"><input type="checkbox" checked={confirmOverdueDuringReconciliation} onChange={(event) => setConfirmOverdueDuringReconciliation(event.target.checked)} />{t('operations.confirmOverdueDuringReconciliation', { count: overdue.length })}</label>}
+            <p className="text-sm text-muted-foreground md:col-span-3">{t('operations.reconcileHint')}</p>
+            {error && <p role="alert" className="text-sm text-destructive md:col-span-3">{error}</p>}
+          </form>
+        )}
       </div>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -223,15 +241,6 @@ export function OperationsPage() {
         </div>
       )}
 
-      {showOpeningBalance && (
-        <form onSubmit={saveOpeningBalance} className="grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-          <label className="grid gap-1 text-sm">{t('operations.openingBalanceAmount')}<Input type="number" step="any" required value={openingBalanceDraft} onChange={(event) => setOpeningBalanceDraft(event.target.value)} /></label>
-          <label className="grid gap-1 text-sm">{t('operations.openingBalanceDate')}<Input type="date" required value={openingDateDraft} onChange={(event) => setOpeningDateDraft(event.target.value)} /></label>
-          <div className="flex gap-2"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowOpeningBalance(false); setError(''); }}>{t('cancel')}</Button></div>
-          {error && <p role="alert" className="text-sm text-destructive md:col-span-3">{error}</p>}
-        </form>
-      )}
-
       {showForm && (
         <form onSubmit={handleSubmit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
           <label className="grid gap-1 text-sm">{t('date')}<Input type="date" required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>
@@ -242,17 +251,6 @@ export function OperationsPage() {
           {form.type === 'adjustment' && <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-5">{t('operations.adjustmentHint')}</p>}
           {error && <p role="alert" className="text-sm text-destructive md:col-span-2 xl:col-span-5">{error}</p>}
           <div className="flex gap-2 md:col-span-2 xl:col-span-5"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowForm(false); setError(''); }}>{t('cancel')}</Button></div>
-        </form>
-      )}
-
-      {showReconcile && (
-        <form onSubmit={saveReconciliation} className="grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-          <div><p className="text-sm text-muted-foreground">{t('operations.projectedBalance')}</p><p className="text-xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p></div>
-          <label className="grid gap-1 text-sm">{t('operations.actualBalance')}<Input type="number" step="any" required value={reconcileBalance} onChange={(event) => setReconcileBalance(event.target.value)} /></label>
-          <Button type="submit">{t('operations.createAdjustment')}</Button>
-          {overdue.length > 0 && <label className="flex items-center gap-2 text-sm md:col-span-3"><input type="checkbox" checked={confirmOverdueDuringReconciliation} onChange={(event) => setConfirmOverdueDuringReconciliation(event.target.checked)} />{t('operations.confirmOverdueDuringReconciliation', { count: overdue.length })}</label>}
-          <p className="text-sm text-muted-foreground md:col-span-3">{t('operations.reconcileHint')}</p>
-          {error && <p role="alert" className="text-sm text-destructive md:col-span-3">{error}</p>}
         </form>
       )}
 
