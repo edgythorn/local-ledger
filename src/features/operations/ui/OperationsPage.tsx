@@ -107,7 +107,7 @@ export function OperationsPage() {
       setError(t('operations.beforeOpeningDate', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) }));
       return;
     }
-    if (form.type === 'planned' && form.date <= today) {
+    if (form.type === 'planned' && form.date < today) {
       setError(t('operations.plannedMustBeFuture'));
       return;
     }
