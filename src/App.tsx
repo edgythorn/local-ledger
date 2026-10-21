@@ -12,7 +12,7 @@ export default function App() {
     <Router>
       <div className="flex h-screen bg-gray-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
         <Sidebar />
-        <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-8">
+        <main className="min-h-0 min-w-0 flex-1 overflow-hidden p-4 md:p-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/operations" element={<OperationsPage />} />
