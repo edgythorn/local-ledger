@@ -55,5 +55,10 @@
   "periodic.day": "День месяца",
   "periodic.add": "Добавить правило",
   "periodic.empty": "Периодических операций нет. Прогноз по ним формироваться не будет.",
-  "periodic.footer": "Если правила не менялись, при первом запуске загружаются примеры из periodicOps.json. После сохранения список хранится в LocalStorage; удалённые правила не восстанавливаются автоматически."
+  "periodic.footer": "Если правила не менялись, при первом запуске загружаются примеры из periodicOps.json. После сохранения список хранится в LocalStorage; удалённые правила не восстанавливаются автоматически.",
+  "operations.currentBalance": "Текущий расчётный баланс",
+  "operations.confirmBalance": "Подтвердить баланс",
+  "operations.adjustBalance": "Скорректировать баланс",
+  "operations.lastConfirmed": "Последнее подтверждение: {{date}}, {{balance}}",
+  "operations.openingBalanceLabel": "Начальный баланс с {{date}}"
 }
