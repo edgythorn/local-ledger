@@ -257,7 +257,7 @@ export function OperationsPage() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
-          <label className="grid gap-1 text-sm">{t('date')}<Input type="date" required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>
+          <label className="grid gap-1 text-sm">{t('date')}<Input type="date" min={form.type === 'planned' ? (today > ledgerSettings.openingBalanceDate ? today : ledgerSettings.openingBalanceDate) : ledgerSettings.openingBalanceDate} required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>
           <label className="grid gap-1 text-sm">{t('amount')}<Input type="number" step="any" required value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} /></label>
           <label className="grid gap-1 text-sm">{t('description')}<Input required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
           <label className="grid gap-1 text-sm">{t('operations.type')}<select className="h-9 rounded-md border bg-background px-3 text-sm" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as OperationType })}><option value="actual">{t('operations.actual')}</option><option value="planned">{t('operations.planned')}</option><option value="adjustment">{t('operations.adjustment')}</option></select></label>
