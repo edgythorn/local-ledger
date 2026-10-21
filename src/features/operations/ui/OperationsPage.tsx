@@ -249,8 +249,8 @@ export function OperationsPage() {
   const selectedItems = timeline.filter((operation) => selected.includes(operation.id));
 
   return (
-    <section className="flex h-full min-h-0 flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4">
+    <section className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+      <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4">
         <div>
           <p className="text-sm text-muted-foreground">{t('operations.currentBalance')}</p>
           <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
@@ -281,7 +281,7 @@ export function OperationsPage() {
           </form>
         )}
       </div>
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="shrink-0 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t('operations')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('operations.subtitle')}</p>
@@ -292,7 +292,7 @@ export function OperationsPage() {
       </header>
 
       {overdue.length > 0 && (
-        <div className="rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+        <div className="shrink-0 rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
           <div className="font-medium">{t('operations.overdue', { count: overdue.length })}</div>
           <div className="mt-1">{t('operations.overdueHint')}</div>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -303,7 +303,7 @@ export function OperationsPage() {
       )}
 
       {selected.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm">
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm">
           <span>{t('operations.selected', { count: selectedItems.length })}</span>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => confirmPlanned(selectedItems)}>{t('operations.confirmSelected')}</Button>
@@ -313,7 +313,7 @@ export function OperationsPage() {
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
+        <form onSubmit={handleSubmit} className="shrink-0 grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
           <label className="grid gap-1 text-sm">{t('date')}<Input type="date" min={form.type === 'planned' ? (today > ledgerSettings.openingBalanceDate ? today : ledgerSettings.openingBalanceDate) : ledgerSettings.openingBalanceDate} required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>
           <label className="grid gap-1 text-sm">{t('amount')}<Input type="number" step="any" required value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} /></label>
           <label className="grid gap-1 text-sm">{t('description')}<Input required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
