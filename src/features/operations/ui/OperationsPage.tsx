@@ -22,6 +22,8 @@ interface OperationFormState {
   category: string;
 }
 
+type VirtualRow = { key: string; kind: 'month' | 'today' | 'operation' | 'summary' | 'empty'; height: number; operation?: TimelineOperation; month?: string; income?: number; expenses?: number; net?: number; monthEndBalance?: number; };
+
 const emptyForm = (): OperationFormState => ({
   date: localDateString(new Date()),
   amount: '',
@@ -46,6 +48,8 @@ export function OperationsPage() {
   const [openingDateDraft, setOpeningDateDraft] = useState(ledgerSettings.openingBalanceDate);
   const [confirmOverdueDuringReconciliation, setConfirmOverdueDuringReconciliation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(600);
 
   const today = localDateString(new Date());
   const timeline = useMemo(() => buildTimeline(operations, periodicRules, ledgerSettings), [operations, periodicRules, ledgerSettings]);
@@ -54,8 +58,61 @@ export function OperationsPage() {
     .filter((operation) => operation.date <= today)
     .at(-1)?.balance ?? ledgerSettings.openingBalance;
 
+  const virtualRows = useMemo<VirtualRow[]>(() => {
+    if (timeline.length === 0) return [{ key: 'empty', kind: 'empty', height: 64 }];
+    const rows: VirtualRow[] = [];
+    const totals = new Map<string, { income: number; expenses: number; net: number; monthEndBalance: number }>();
+    for (const op of timeline) {
+      const month = op.date.slice(0, 7);
+      const total = totals.get(month) ?? { income: 0, expenses: 0, net: 0, monthEndBalance: ledgerSettings.openingBalance };
+      total.income += Math.max(0, op.amount); total.expenses += Math.min(0, op.amount); total.net += op.amount; total.monthEndBalance = op.balance;
+      totals.set(month, total);
+    }
+    let previousMonth: string | undefined;
+    let markerAdded = false;
+    timeline.forEach((operation, index) => {
+      const month = operation.date.slice(0, 7);
+      if (month !== previousMonth) {
+        if (previousMonth) rows.push({ key: 'summary-' + previousMonth, kind: 'summary', month: previousMonth, height: 40, ...totals.get(previousMonth)! });
+        rows.push({ key: 'month-' + month, kind: 'month', month, height: 36 });
+        previousMonth = month;
+      }
+      const previous = timeline[index - 1];
+      if (!markerAdded && operation.date >= today && (!previous || previous.date < today)) {
+        rows.push({ key: 'today-marker', kind: 'today', height: 36 }); markerAdded = true;
+      }
+      rows.push({ key: operation.id, kind: 'operation', operation, height: 42 });
+    });
+    if (previousMonth) rows.push({ key: 'summary-' + previousMonth, kind: 'summary', month: previousMonth, height: 40, ...totals.get(previousMonth)! });
+    if (!markerAdded) rows.push({ key: 'today-marker', kind: 'today', height: 36 });
+    return rows;
+  }, [timeline, today, ledgerSettings.openingBalance]);
+
+  const rowOffsets = useMemo(() => {
+    const offsets: number[] = []; let offset = 0;
+    for (const row of virtualRows) { offsets.push(offset); offset += row.height; }
+    return { offsets, totalHeight: offset };
+  }, [virtualRows]);
+  const firstVisible = rowOffsets.offsets.findIndex((offset, index) => offset + virtualRows[index].height >= scrollTop);
+  const visibleStart = Math.max(0, (firstVisible < 0 ? 0 : firstVisible) - 6);
+  const nextAfterViewport = rowOffsets.offsets.findIndex((offset) => offset > scrollTop + viewportHeight);
+  const visibleEnd = Math.min(virtualRows.length, (nextAfterViewport < 0 ? virtualRows.length : nextAfterViewport) + 7);
+
   useEffect(() => {
-    document.getElementById('today-marker')?.scrollIntoView({ block: 'center' });
+    const element = scrollRef.current;
+    if (!element) return;
+    const updateViewport = () => setViewportHeight(element.clientHeight);
+    updateViewport();
+    const observer = new ResizeObserver(updateViewport);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    const markerIndex = virtualRows.findIndex((row) => row.kind === 'today');
+    if (markerIndex >= 0) element.scrollTop = Math.max(0, rowOffsets.offsets[markerIndex] - element.clientHeight / 2);
   }, []);
 
   const dateFormatter = useMemo(
@@ -199,7 +256,7 @@ export function OperationsPage() {
           <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
           {ledgerSettings.checkpoints.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].date + 'T12:00:00')), balance: numberFormatter.format(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].actualBalance) })}</p>}
           {ledgerSettings.checkpoints.length === 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
-          <Button className="mt-2 h-auto px-0 py-1 text-xs" variant="link" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }}>{t('operations.editOpeningBalance')}</Button>
+          <Button className="mt-2 h-auto cursor-pointer px-0 py-1 text-xs" variant="link" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }}>{t('operations.editOpeningBalance')}</Button>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => { setReconcileBalance(String(projectedBalanceToday)); setConfirmOverdueDuringReconciliation(false); setShowOpeningBalance(false); setShowReconcile((value) => !value); setError(''); }} aria-label={t('operations.confirmBalance')} title={t('operations.confirmBalance')}>✓</Button>
@@ -268,50 +325,31 @@ export function OperationsPage() {
         </form>
       )}
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-lg border">
-        <table className="w-full min-w-[560px] table-fixed text-sm">
-          <colgroup><col className="w-[52px]" /><col className="w-[104px]" /><col /><col className="w-[88px]" /><col className="w-[96px]" /></colgroup>
-          <thead className="sticky top-0 z-10 bg-muted">
-            <tr><th className="px-3 py-2 text-left">{t('status')}</th><th className="px-3 py-2 text-left">{t('date')}</th><th className="px-3 py-2 text-left">{t('description')}</th><th className="px-3 py-2 text-right">{t('amount')}</th><th className="px-3 py-2 text-right">{t('balance')}</th></tr>
-          </thead>
-          <tbody>
-            {timeline.map((operation, index) => {
-              const previous = timeline[index - 1];
-              const isTodayMarker = operation.date >= today && (!previous || previous.date < today);
-              const month = operation.date.slice(0, 7);
-              const previousMonth = previous?.date.slice(0, 7);
-              return (
-                <Fragment key={operation.id}>
-                  {(!previous || previousMonth !== month) && <tr><td colSpan={5} className="bg-muted/60 px-3 py-2 font-semibold capitalize">{new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(new Date(`${month}-15T12:00:00`))}</td></tr>}
-                  {isTodayMarker && <tr id="today-marker"><td colSpan={5} className="border-y-2 border-primary bg-primary/10 px-3 py-2 font-semibold">{t('operations.today')}</td></tr>}
-                  <tr className={`transition-colors hover:bg-accent/70 ${operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1.5">
-                        {operation.type === 'actual' ? '✅' : operation.type === 'planned' ? '🕐' : '✏️'}
-                        <span className="sr-only">{t(`operations.${operation.type}`)}</span>
-                        {operation.type === 'planned' && operation.date <= today && <input className="m-0 h-3.5 w-3.5 shrink-0" aria-label={t('operations.select')} title={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} />}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</td>
-                    <td className="overflow-hidden px-2 py-2"><div className="truncate" title={operation.description}>{operation.description}</div>{operation.category && <div className="truncate text-xs text-muted-foreground" title={operation.category}>{operation.category}</div>}</td>
-                    <td className={`px-3 py-2 text-right tabular-nums ${operation.amount < 0 ? 'text-red-600' : operation.amount > 0 ? 'text-green-600' : ''}`}>{numberFormatter.format(operation.amount)}</td>
-                    <td className={`px-3 py-2 text-right tabular-nums ${operation.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(operation.balance)}</td>
-                  </tr>
-                  {(!timeline[index + 1] || timeline[index + 1].date.slice(0, 7) !== month) && (() => {
-                    const monthOperations = timeline.filter((item) => item.date.slice(0, 7) === month);
-                    const income = monthOperations.reduce((sum, item) => sum + Math.max(0, item.amount), 0);
-                    const expenses = monthOperations.reduce((sum, item) => sum + Math.min(0, item.amount), 0);
-                    const net = income + expenses;
-                    const monthEndBalance = monthOperations[monthOperations.length - 1]?.balance ?? ledgerSettings.openingBalance;
-                    return <tr><td colSpan={5} className="border-b bg-muted/30 px-3 py-2"><div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 text-right font-medium"><span className="text-green-600">{t('operations.monthIncome')}: <span className="tabular-nums">+{numberFormatter.format(income)}</span></span><span className="text-red-600">{t('operations.monthExpenses')}: <span className="tabular-nums">{numberFormatter.format(expenses)}</span></span><span>{t('operations.monthNet')}: <span className={net < 0 ? 'text-red-600 tabular-nums' : net > 0 ? 'text-green-600 tabular-nums' : 'tabular-nums'}>{numberFormatter.format(net)}</span></span><span>{t('operations.monthEndBalance')}: <span className={monthEndBalance < 0 ? 'text-red-600 tabular-nums' : 'text-green-600 tabular-nums'}>{numberFormatter.format(monthEndBalance)}</span></span></div></td></tr>;
-                  })()}
-                </Fragment>
-              );
+      <div ref={scrollRef} onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)} className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border">
+        <div className="min-w-[560px] text-sm">
+          <div className="sticky top-0 z-10 grid bg-muted font-semibold" style={{ gridTemplateColumns: '52px 104px minmax(100px, 1fr) 88px 96px' }}>
+            <div className="px-3 py-2">{t('status')}</div><div className="px-3 py-2">{t('date')}</div><div className="px-3 py-2">{t('description')}</div><div className="px-3 py-2 text-right">{t('amount')}</div><div className="px-3 py-2 text-right">{t('balance')}</div>
+          </div>
+          <div style={{ height: rowOffsets.totalHeight, position: 'relative' }}>
+            {virtualRows.slice(visibleStart, visibleEnd).map((row, visibleIndex) => {
+              const index = visibleStart + visibleIndex;
+              const rowStyle = { position: 'absolute' as const, top: rowOffsets.offsets[index], left: 0, right: 0, height: row.height };
+              if (row.kind === 'month') return <div key={row.key} style={rowStyle} className="flex items-center border-b bg-muted/60 px-3 font-semibold capitalize">{new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(new Date(`${row.month}-15T12:00:00`))}</div>;
+              if (row.kind === 'today') return <div key={row.key} style={rowStyle} className="flex items-center border-y-2 border-primary bg-primary/10 px-3 font-semibold">{t('operations.today')}</div>;
+              if (row.kind === 'summary') return <div key={row.key} style={{ ...rowStyle, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }} className="gap-x-5 border-b bg-muted/30 px-3 text-right font-medium">
+                <span className="text-green-600">{t('operations.monthIncome')}: <span className="tabular-nums">+{numberFormatter.format(row.income ?? 0)}</span></span><span className="text-red-600">{t('operations.monthExpenses')}: <span className="tabular-nums">{numberFormatter.format(row.expenses ?? 0)}</span></span><span>{t('operations.monthNet')}: <span className={(row.net ?? 0) < 0 ? 'text-red-600 tabular-nums' : (row.net ?? 0) > 0 ? 'text-green-600 tabular-nums' : 'tabular-nums'}>{numberFormatter.format(row.net ?? 0)}</span></span><span>{t('operations.monthEndBalance')}: <span className={(row.monthEndBalance ?? 0) < 0 ? 'text-red-600 tabular-nums' : 'text-green-600 tabular-nums'}>{numberFormatter.format(row.monthEndBalance ?? 0)}</span></span>
+              </div>;
+              if (row.kind === 'empty') return <div key={row.key} style={rowStyle} className="flex items-center justify-center text-muted-foreground">{t('operations.empty')}</div>;
+              const operation = row.operation!;
+              return <div key={row.key} style={{ ...rowStyle, display: 'grid', gridTemplateColumns: '52px 104px minmax(100px, 1fr) 88px 96px', alignItems: 'center' }} className={`border-b transition-colors hover:bg-accent/70 ${operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+                <div className="flex items-center gap-1.5 px-3">{operation.type === 'actual' ? '✅' : operation.type === 'planned' ? '🕐' : '✏️'}<span className="sr-only">{t(`operations.${operation.type}`)}</span>{operation.type === 'planned' && operation.date <= today && <input className="m-0 h-3.5 w-3.5 shrink-0" aria-label={t('operations.select')} title={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} />}</div>
+                <div className="whitespace-nowrap px-3">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</div>
+                <div className="min-w-0 overflow-hidden px-2"><div className="truncate" title={operation.description}>{operation.description}</div>{operation.category && <div className="truncate text-xs text-muted-foreground" title={operation.category}>{operation.category}</div>}</div>
+                <div className={`px-2 text-right tabular-nums ${operation.amount < 0 ? 'text-red-600' : operation.amount > 0 ? 'text-green-600' : ''}`}>{numberFormatter.format(operation.amount)}</div><div className={`px-2 text-right tabular-nums ${operation.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(operation.balance)}</div>
+              </div>;
             })}
-            {timeline.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t('operations.empty')}</td></tr>}
-            {!timeline.some((operation) => operation.date >= today) && <tr id="today-marker"><td colSpan={5} className="border-y-2 border-primary bg-primary/10 px-3 py-2 font-semibold">{t('operations.today')}</td></tr>}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </section>
   );
