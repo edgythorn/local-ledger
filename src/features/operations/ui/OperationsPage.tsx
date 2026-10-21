@@ -235,8 +235,8 @@ export function OperationsPage() {
       )}
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto rounded-lg border">
-        <table className="w-full min-w-[760px] table-fixed text-sm">
-          <colgroup><col className="w-[110px]" /><col className="w-[140px]" /><col /><col className="w-[130px]" /><col className="w-[150px]" /></colgroup>
+        <table className="w-full min-w-[900px] table-auto text-sm">
+          <colgroup><col className="min-w-[56px] w-[64px]" /><col className="min-w-[124px]" /><col className="min-w-[220px] w-full" /><col className="min-w-[120px]" /><col className="min-w-[140px]" /></colgroup>
           <thead className="sticky top-0 z-10 bg-muted">
             <tr><th className="px-3 py-2 text-left">{t('status')}</th><th className="px-3 py-2 text-left">{t('date')}</th><th className="px-3 py-2 text-left">{t('description')}</th><th className="px-3 py-2 text-right">{t('amount')}</th><th className="px-3 py-2 text-right">{t('balance')}</th></tr>
           </thead>
@@ -259,8 +259,8 @@ export function OperationsPage() {
                   <tr className={operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        {operation.type === 'actual' ? '●' : operation.type === 'planned' ? '◷' : '↔'}
-                        <span>{t(`operations.${operation.type}`)}</span>
+                        {operation.type === 'actual' ? '✅' : operation.type === 'planned' ? '🕐' : '✏️'}
+                        <span className="sr-only">{t(`operations.${operation.type}`)}</span>
                       </div>
                       {operation.type === 'planned' && operation.date <= today && <label className="mt-1 flex items-center gap-1 text-xs" title={t('operations.select')}><input aria-label={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} /></label>}
                     </td>
