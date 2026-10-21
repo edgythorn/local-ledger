@@ -55,5 +55,10 @@
   "periodic.day": "Day of month",
   "periodic.add": "Add rule",
   "periodic.empty": "No periodic operations. No forecast will be generated from rules.",
-  "periodic.footer": "On first launch, examples from periodicOps.json are loaded if no saved rules exist. Once saved, the list lives in LocalStorage; deleted rules are not restored automatically."
+  "periodic.footer": "On first launch, examples from periodicOps.json are loaded if no saved rules exist. Once saved, the list lives in LocalStorage; deleted rules are not restored automatically.",
+  "operations.currentBalance": "Current projected balance",
+  "operations.confirmBalance": "Confirm balance",
+  "operations.adjustBalance": "Adjust balance",
+  "operations.lastConfirmed": "Last confirmed: {{date}}, {{balance}}",
+  "operations.openingBalanceLabel": "Opening balance from {{date}}"
 }
