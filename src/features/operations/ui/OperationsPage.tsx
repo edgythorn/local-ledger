@@ -278,7 +278,7 @@ export function OperationsPage() {
                         {operation.type === 'actual' ? '✅' : operation.type === 'planned' ? '🕐' : '✏️'}
                         <span className="sr-only">{t(`operations.${operation.type}`)}</span>
                         {operation.type === 'planned' && operation.date <= today && <input className="m-0 h-3.5 w-3.5 shrink-0" aria-label={t('operations.select')} title={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} />}
-                      </div>}
+                      </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</td>
                     <td className="px-3 py-2"><div>{operation.description}</div>{operation.category && <div className="text-xs text-muted-foreground">{operation.category}</div>}</td>
