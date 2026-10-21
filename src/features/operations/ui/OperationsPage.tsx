@@ -50,9 +50,10 @@ export function OperationsPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(600);
+  const [forecastMonths, setForecastMonths] = useState(12);
 
   const today = localDateString(new Date());
-  const timeline = useMemo(() => buildTimeline(operations, periodicRules, ledgerSettings), [operations, periodicRules, ledgerSettings]);
+  const timeline = useMemo(() => buildTimeline(operations, periodicRules, ledgerSettings, new Date(), forecastMonths), [operations, periodicRules, ledgerSettings, forecastMonths]);
   const overdue = timeline.filter((operation) => operation.type === 'planned' && operation.date <= today);
   const projectedBalanceToday = timeline
     .filter((operation) => operation.date <= today)
@@ -325,7 +326,7 @@ export function OperationsPage() {
         </form>
       )}
 
-      <div ref={scrollRef} onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)} className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border">
+      <div ref={scrollRef} onScroll={(event) => { const element = event.currentTarget; setScrollTop(element.scrollTop); if (element.scrollTop + element.clientHeight >= element.scrollHeight - 600) setForecastMonths((months) => months + 12); }} className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border">
         <div className="min-w-[560px] text-sm">
           <div className="sticky top-0 z-10 grid bg-muted font-semibold" style={{ gridTemplateColumns: '52px 104px minmax(100px, 1fr) 88px 96px' }}>
             <div className="px-3 py-2">{t('status')}</div><div className="px-3 py-2">{t('date')}</div><div className="px-3 py-2">{t('description')}</div><div className="px-3 py-2 text-right">{t('amount')}</div><div className="px-3 py-2 text-right">{t('balance')}</div>
