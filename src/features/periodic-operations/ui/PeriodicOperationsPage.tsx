@@ -54,6 +54,7 @@ export function PeriodicOperationsPage() {
   }
 
   const numberFormatter = new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 });
+  const sortedRules = [...rules].sort((a, b) => a.day - b.day || a.description.localeCompare(b.description, i18n.language));
 
   return (
     <section className="flex flex-col gap-4">
@@ -72,7 +73,7 @@ export function PeriodicOperationsPage() {
           <colgroup><col className="w-24" /><col className="w-36" /><col /><col className="w-40" /><col className="w-40" /></colgroup>
           <thead className="bg-muted"><tr><th className="px-3 py-2 text-left">{t('periodic.day')}</th><th className="px-3 py-2 text-right">{t('amount')}</th><th className="px-3 py-2 text-left">{t('description')}</th><th className="px-3 py-2 text-left">{t('operations.category')}</th><th className="px-3 py-2 text-left">{t('actions')}</th></tr></thead>
           <tbody>
-            {rules.map((rule) => <tr key={rule.id} className="border-t"><td className="px-3 py-2">{rule.day}</td><td className={`px-3 py-2 text-right tabular-nums ${rule.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(rule.amount)}</td><td className="px-3 py-2 break-words">{rule.description}</td><td className="px-3 py-2 break-words">{rule.category || '—'}</td><td className="px-3 py-2"><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => edit(rule)}>{t('edit')}</Button><Button size="sm" variant="destructive" onClick={() => { persist(rules.filter((item) => item.id !== rule.id)); if (editingId === rule.id) { setEditingId(null); setForm(emptyForm()); } }}>{t('delete')}</Button></div></td></tr>)}
+            {sortedRules.map((rule) => <tr key={rule.id} className="border-t"><td className="px-3 py-2">{rule.day}</td><td className={`px-3 py-2 text-right tabular-nums ${rule.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(rule.amount)}</td><td className="px-3 py-2 break-words">{rule.description}</td><td className="px-3 py-2 break-words">{rule.category || '—'}</td><td className="px-3 py-2"><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => edit(rule)}>{t('edit')}</Button><Button size="sm" variant="destructive" onClick={() => { persist(rules.filter((item) => item.id !== rule.id)); if (editingId === rule.id) { setEditingId(null); setForm(emptyForm()); } }}>{t('delete')}</Button></div></td></tr>)}
             {rules.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">{t('periodic.empty')}</td></tr>}
           </tbody>
         </table>
