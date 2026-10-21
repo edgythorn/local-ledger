@@ -103,6 +103,15 @@ export function OperationsPage() {
       return;
     }
 
+    if (form.date < ledgerSettings.openingBalanceDate) {
+      setError(t('operations.beforeOpeningDate', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) }));
+      return;
+    }
+    if (form.type === 'planned' && form.date <= today) {
+      setError(t('operations.plannedMustBeFuture'));
+      return;
+    }
+
     if (form.type === 'actual') {
       const blocking = overdue.filter((operation) => operation.date <= form.date);
       if (blocking.length) {
@@ -127,6 +136,11 @@ export function OperationsPage() {
     event.preventDefault();
     const openingBalance = Number(openingBalanceDraft);
     if (openingBalanceDraft.trim() === '' || !Number.isFinite(openingBalance) || !openingDateDraft) { setError(t('validation.required')); return; }
+    const earliestOperation = operations.reduce<string | undefined>((earliest, operation) => !earliest || operation.date < earliest ? operation.date : earliest, undefined);
+    if (earliestOperation && openingDateDraft > earliestOperation) {
+      setError(t('operations.openingDateAfterOperation', { date: dateFormatter.format(new Date(earliestOperation + 'T12:00:00')) }));
+      return;
+    }
     const nextSettings = { ...ledgerSettings, openingBalance, openingBalanceDate: openingDateDraft };
     setLedgerSettings(nextSettings); saveLedgerSettings(nextSettings); setShowOpeningBalance(false); setError('');
   }
@@ -255,8 +269,8 @@ export function OperationsPage() {
       )}
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto rounded-lg border">
-        <table className="w-full min-w-[760px] table-auto text-sm">
-          <colgroup><col className="w-[64px] min-w-[64px]" /><col className="w-[124px] min-w-[124px]" /><col className="w-full min-w-[160px]" /><col className="min-w-[110px]" /><col className="min-w-[120px]" /></colgroup>
+        <table className="w-full min-w-[700px] table-auto text-sm">
+          <colgroup><col className="w-[64px] min-w-[64px]" /><col className="w-[124px] min-w-[124px]" /><col className="w-full min-w-[100px]" /><col className="min-w-[100px]" /><col className="min-w-[110px]" /></colgroup>
           <thead className="sticky top-0 z-10 bg-muted">
             <tr><th className="px-3 py-2 text-left">{t('status')}</th><th className="px-3 py-2 text-left">{t('date')}</th><th className="px-3 py-2 text-left">{t('description')}</th><th className="px-3 py-2 text-right">{t('amount')}</th><th className="px-3 py-2 text-right">{t('balance')}</th></tr>
           </thead>
@@ -270,7 +284,7 @@ export function OperationsPage() {
                 <Fragment key={operation.id}>
                   {(!previous || previousMonth !== month) && <tr><td colSpan={5} className="bg-muted/60 px-3 py-2 font-semibold capitalize">{new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(new Date(`${month}-15T12:00:00`))}</td></tr>}
                   {isTodayMarker && <tr id="today-marker"><td colSpan={5} className="border-y-2 border-primary bg-primary/10 px-3 py-2 font-semibold">{t('operations.today')}</td></tr>}
-                  <tr className={operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
+                  <tr className={`transition-colors hover:bg-accent/70 ${operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
                         {operation.type === 'actual' ? '✅' : operation.type === 'planned' ? '🕐' : '✏️'}
@@ -279,7 +293,7 @@ export function OperationsPage() {
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</td>
-                    <td className="px-3 py-2"><div>{operation.description}</div>{operation.category && <div className="text-xs text-muted-foreground">{operation.category}</div>}</td>
+                    <td className="max-w-0 overflow-hidden px-3 py-2"><div className="truncate" title={operation.description}>{operation.description}</div>{operation.category && <div className="truncate text-xs text-muted-foreground" title={operation.category}>{operation.category}</div>}</td>
                     <td className={`px-3 py-2 text-right tabular-nums ${operation.amount < 0 ? 'text-red-600' : operation.amount > 0 ? 'text-green-600' : ''}`}>{numberFormatter.format(operation.amount)}</td>
                     <td className={`px-3 py-2 text-right tabular-nums ${operation.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(operation.balance)}</td>
                   </tr>
