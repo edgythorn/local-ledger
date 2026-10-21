@@ -19,7 +19,6 @@ export function buildTimeline(
   now = new Date(),
   forecastMonths = 12,
 ): TimelineOperation[] {
-  const today = localDateString(now);
   const earliestSavedDate = savedOperations.reduce<string | undefined>(
     (earliest, operation) => !earliest || operation.date < earliest ? operation.date : earliest,
     undefined,
