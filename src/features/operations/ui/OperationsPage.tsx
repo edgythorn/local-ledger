@@ -41,6 +41,9 @@ export function OperationsPage() {
   const [error, setError] = useState('');
   const [reconcileBalance, setReconcileBalance] = useState('');
   const [showReconcile, setShowReconcile] = useState(false);
+  const [showOpeningBalance, setShowOpeningBalance] = useState(false);
+  const [openingBalanceDraft, setOpeningBalanceDraft] = useState(String(ledgerSettings.openingBalance));
+  const [openingDateDraft, setOpeningDateDraft] = useState(ledgerSettings.openingBalanceDate);
   const [confirmOverdueDuringReconciliation, setConfirmOverdueDuringReconciliation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -120,6 +123,14 @@ export function OperationsPage() {
     setShowForm(false);
   }
 
+  function saveOpeningBalance(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const openingBalance = Number(openingBalanceDraft);
+    if (openingBalanceDraft.trim() === '' || !Number.isFinite(openingBalance) || !openingDateDraft) { setError(t('validation.required')); return; }
+    const nextSettings = { ...ledgerSettings, openingBalance, openingBalanceDate: openingDateDraft };
+    setLedgerSettings(nextSettings); saveLedgerSettings(nextSettings); setShowOpeningBalance(false); setError('');
+  }
+
   function saveReconciliation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const actualBalance = Number(reconcileBalance);
@@ -174,6 +185,7 @@ export function OperationsPage() {
           <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
           {ledgerSettings.checkpoints.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].date + 'T12:00:00')), balance: numberFormatter.format(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].actualBalance) })}</p>}
           {ledgerSettings.checkpoints.length === 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
+          <button type="button" className="mt-2 text-xs text-primary underline-offset-4 hover:underline" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowOpeningBalance((value) => !value); setError(''); }}>{t('operations.editOpeningBalance')}</button>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => { setReconcileBalance(String(projectedBalanceToday)); setConfirmOverdueDuringReconciliation(false); setShowReconcile(true); setError(''); }} aria-label={t('operations.confirmBalance')} title={t('operations.confirmBalance')}>✓</Button>
@@ -211,6 +223,15 @@ export function OperationsPage() {
         </div>
       )}
 
+      {showOpeningBalance && (
+        <form onSubmit={saveOpeningBalance} className="grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+          <label className="grid gap-1 text-sm">{t('operations.openingBalanceAmount')}<Input type="number" step="any" required value={openingBalanceDraft} onChange={(event) => setOpeningBalanceDraft(event.target.value)} /></label>
+          <label className="grid gap-1 text-sm">{t('operations.openingBalanceDate')}<Input type="date" required value={openingDateDraft} onChange={(event) => setOpeningDateDraft(event.target.value)} /></label>
+          <div className="flex gap-2"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowOpeningBalance(false); setError(''); }}>{t('cancel')}</Button></div>
+          {error && <p role="alert" className="text-sm text-destructive md:col-span-3">{error}</p>}
+        </form>
+      )}
+
       {showForm && (
         <form onSubmit={handleSubmit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
           <label className="grid gap-1 text-sm">{t('date')}<Input type="date" required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>
@@ -236,8 +257,8 @@ export function OperationsPage() {
       )}
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto rounded-lg border">
-        <table className="w-full min-w-[900px] table-auto text-sm">
-          <colgroup><col className="min-w-[56px] w-[64px]" /><col className="min-w-[124px]" /><col className="min-w-[220px] w-full" /><col className="min-w-[120px]" /><col className="min-w-[140px]" /></colgroup>
+        <table className="w-full min-w-[760px] table-auto text-sm">
+          <colgroup><col className="w-[64px] min-w-[64px]" /><col className="w-[124px] min-w-[124px]" /><col className="w-full min-w-[160px]" /><col className="min-w-[110px]" /><col className="min-w-[120px]" /></colgroup>
           <thead className="sticky top-0 z-10 bg-muted">
             <tr><th className="px-3 py-2 text-left">{t('status')}</th><th className="px-3 py-2 text-left">{t('date')}</th><th className="px-3 py-2 text-left">{t('description')}</th><th className="px-3 py-2 text-right">{t('amount')}</th><th className="px-3 py-2 text-right">{t('balance')}</th></tr>
           </thead>
@@ -249,27 +270,29 @@ export function OperationsPage() {
               const previousMonth = previous?.date.slice(0, 7);
               return (
                 <Fragment key={operation.id}>
-                  {(!previous || previousMonth !== month) && (() => {
-                    const monthOperations = timeline.filter((item) => item.date.slice(0, 7) === month);
-                    const income = monthOperations.reduce((sum, item) => sum + Math.max(0, item.amount), 0);
-                    const expenses = monthOperations.reduce((sum, item) => sum + Math.min(0, item.amount), 0);
-                    const monthEndBalance = monthOperations[monthOperations.length - 1]?.balance ?? ledgerSettings.openingBalance;
-                    return <tr><td colSpan={5} className="bg-muted/60 px-3 py-2"><div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-medium"><span>{new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(new Date(`${month}-15T12:00:00`))}</span><span className="text-green-600">+{numberFormatter.format(income)}</span><span className="text-red-600">{numberFormatter.format(expenses)}</span><span>{t('operations.monthNet')}: {numberFormatter.format(income + expenses)}</span><span className="ml-auto">{t('operations.monthEndBalance')}: {numberFormatter.format(monthEndBalance)}</span></div></td></tr>;
-                  })()}
+                  {(!previous || previousMonth !== month) && <tr><td colSpan={5} className="bg-muted/60 px-3 py-2 font-semibold capitalize">{new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(new Date(`${month}-15T12:00:00`))}</td></tr>}
                   {isTodayMarker && <tr id="today-marker"><td colSpan={5} className="border-y-2 border-primary bg-primary/10 px-3 py-2 font-semibold">{t('operations.today')}</td></tr>}
                   <tr className={operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
                     <td className="px-3 py-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {operation.type === 'actual' ? '✅' : operation.type === 'planned' ? '🕐' : '✏️'}
                         <span className="sr-only">{t(`operations.${operation.type}`)}</span>
-                      </div>
-                      {operation.type === 'planned' && operation.date <= today && <label className="mt-1 flex items-center gap-1 text-xs" title={t('operations.select')}><input aria-label={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} /></label>}
+                        {operation.type === 'planned' && operation.date <= today && <input className="m-0 h-3.5 w-3.5 shrink-0" aria-label={t('operations.select')} title={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} />}
+                      </div>}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</td>
                     <td className="px-3 py-2"><div>{operation.description}</div>{operation.category && <div className="text-xs text-muted-foreground">{operation.category}</div>}</td>
                     <td className={`px-3 py-2 text-right tabular-nums ${operation.amount < 0 ? 'text-red-600' : operation.amount > 0 ? 'text-green-600' : ''}`}>{numberFormatter.format(operation.amount)}</td>
                     <td className={`px-3 py-2 text-right tabular-nums ${operation.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(operation.balance)}</td>
                   </tr>
+                  {(!timeline[index + 1] || timeline[index + 1].date.slice(0, 7) !== month) && (() => {
+                    const monthOperations = timeline.filter((item) => item.date.slice(0, 7) === month);
+                    const income = monthOperations.reduce((sum, item) => sum + Math.max(0, item.amount), 0);
+                    const expenses = monthOperations.reduce((sum, item) => sum + Math.min(0, item.amount), 0);
+                    const net = income + expenses;
+                    const monthEndBalance = monthOperations[monthOperations.length - 1]?.balance ?? ledgerSettings.openingBalance;
+                    return <tr><td colSpan={5} className="border-b bg-muted/30 px-3 py-2"><div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 text-right font-medium"><span className="text-green-600">{t('operations.monthIncome')}: <span className="tabular-nums">+{numberFormatter.format(income)}</span></span><span className="text-red-600">{t('operations.monthExpenses')}: <span className="tabular-nums">{numberFormatter.format(expenses)}</span></span><span>{t('operations.monthNet')}: <span className={net < 0 ? 'text-red-600 tabular-nums' : net > 0 ? 'text-green-600 tabular-nums' : 'tabular-nums'}>{numberFormatter.format(net)}</span></span><span>{t('operations.monthEndBalance')}: <span className={monthEndBalance < 0 ? 'text-red-600 tabular-nums' : 'text-green-600 tabular-nums'}>{numberFormatter.format(monthEndBalance)}</span></span></div></td></tr>;
+                  })()}
                 </Fragment>
               );
             })}
