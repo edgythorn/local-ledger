@@ -57,7 +57,7 @@ export function PeriodicOperationsPage() {
   const sortedRules = [...rules].sort((a, b) => a.day - b.day || a.description.localeCompare(b.description, i18n.language));
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
       <header><h1 className="text-2xl font-semibold">{t('periodic.title')}</h1><p className="mt-1 text-sm text-muted-foreground">{t('periodic.subtitle')}</p></header>
       <form onSubmit={submit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
         <label className="grid gap-1 text-sm">{t('periodic.day')}<Input type="number" min={1} max={31} step={1} required value={form.day} onChange={(event) => setForm({ ...form, day: event.target.value })} /></label>
