@@ -1,4 +1,4 @@
-const CACHE_NAME = 'local-ledger-pwa-v1';
+const CACHE_NAME = 'local-ledger-pwa-v2';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
@@ -29,21 +29,29 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
   event.respondWith((async () => {
-    const cached = await caches.match(request);
+    const cache = await caches.open(CACHE_NAME);
+
+    // Keep navigations fresh when online, but fall back to the cached app shell offline.
+    if (request.mode === 'navigate') {
+      try {
+        const response = await fetch(request);
+        if (response.ok) cache.put('/', response.clone());
+        return response;
+      } catch {
+        const fallback = await cache.match('/');
+        if (fallback) return fallback;
+        throw new Error('Local Ledger is unavailable offline until it has been opened online once.');
+      }
+    }
+
+    const cached = await cache.match(request);
     if (cached) return cached;
 
     try {
       const response = await fetch(request);
-      if (response.ok) {
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, response.clone());
-      }
+      if (response.ok) cache.put(request, response.clone());
       return response;
     } catch (error) {
-      if (request.mode === 'navigate') {
-        const fallback = await caches.match('/');
-        if (fallback) return fallback;
-      }
       throw error;
     }
   })());
