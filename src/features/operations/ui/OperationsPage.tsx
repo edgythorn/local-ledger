@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
+import { StateTransfer } from '../../../components/StateTransfer';
 import { buildTimeline } from '../../../entities/operation/model/timeline';
 import { localDateString } from '../../../entities/operation/model/dates';
 import {
@@ -36,7 +37,7 @@ export function OperationsPage() {
   const { t, i18n } = useTranslation();
   const [operations, setOperations] = useState<Operation[]>(() => getOperations());
   const [ledgerSettings, setLedgerSettings] = useState<LedgerSettings>(() => getLedgerSettings());
-  const [periodicRules] = useState(() => getPeriodicOperations());
+  const [periodicRules, setPeriodicRules] = useState(() => getPeriodicOperations());
   const [form, setForm] = useState<OperationFormState>(emptyForm);
   const [showForm, setShowForm] = useState(false);
   const [editingOperationId, setEditingOperationId] = useState<string | null>(null);
@@ -99,6 +100,17 @@ export function OperationsPage() {
   const visibleStart = Math.max(0, (firstVisible < 0 ? 0 : firstVisible) - 6);
   const nextAfterViewport = rowOffsets.offsets.findIndex((offset) => offset > scrollTop + viewportHeight);
   const visibleEnd = Math.min(virtualRows.length, (nextAfterViewport < 0 ? virtualRows.length : nextAfterViewport) + 7);
+
+  useEffect(() => {
+    const handleStateImported = (event: Event) => {
+      const datasets = (event as CustomEvent<{ datasets: string[] }>).detail?.datasets ?? [];
+      if (datasets.includes('operations')) setOperations(getOperations());
+      if (datasets.includes('periodicOperations')) setPeriodicRules(getPeriodicOperations());
+      if (datasets.includes('operations')) setSelected([]);
+    };
+    window.addEventListener('local-ledger:state-imported', handleStateImported);
+    return () => window.removeEventListener('local-ledger:state-imported', handleStateImported);
+  }, []);
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -316,7 +328,8 @@ export function OperationsPage() {
           <h1 className="text-2xl font-semibold">{t('operations')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('operations.subtitle')}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <StateTransfer />
           <Button onClick={() => { if (showForm) { setShowForm(false); setEditingOperationId(null); setForm(emptyForm()); } else { setShowForm(true); setEditingOperationId(null); setForm(emptyForm()); } setError(''); }}>{t('operations.add')}</Button>
         </div>
       </header>
