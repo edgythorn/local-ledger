@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
+import { StateTransfer } from '../../../components/StateTransfer';
 import { createId, getPeriodicOperations, savePeriodicOperations } from '../../../entities/operation/model/storage';
 import type { PeriodicOperation } from '../../../entities/operation/model/types';
 
@@ -20,6 +21,19 @@ export function PeriodicOperationsPage() {
   const [form, setForm] = useState<RuleForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const handleStateImported = (event: Event) => {
+      const datasets = (event as CustomEvent<{ datasets: string[] }>).detail?.datasets ?? [];
+      if (datasets.includes('periodicOperations')) {
+        setRules(getPeriodicOperations());
+        setEditingId(null);
+        setForm(emptyForm());
+      }
+    };
+    window.addEventListener('local-ledger:state-imported', handleStateImported);
+    return () => window.removeEventListener('local-ledger:state-imported', handleStateImported);
+  }, []);
 
   function persist(next: PeriodicOperation[]) {
     setRules(next);
@@ -58,7 +72,7 @@ export function PeriodicOperationsPage() {
 
   return (
     <section className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">
-      <header><h1 className="text-2xl font-semibold">{t('periodic.title')}</h1><p className="mt-1 text-sm text-muted-foreground">{t('periodic.subtitle')}</p></header>
+      <header className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-semibold">{t('periodic.title')}</h1><p className="mt-1 text-sm text-muted-foreground">{t('periodic.subtitle')}</p></div><StateTransfer /></header>
       <form onSubmit={submit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
         <label className="grid gap-1 text-sm">{t('periodic.day')}<Input type="number" min={1} max={31} step={1} required value={form.day} onChange={(event) => setForm({ ...form, day: event.target.value })} /></label>
         <label className="grid gap-1 text-sm">{t('amount')}<Input type="number" step="any" required value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} /></label>
