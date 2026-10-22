@@ -80,5 +80,13 @@
   "stateTransfer.invalidFile": "Invalid LocalLedger state JSON file.",
   "stateTransfer.invalidOperations": "The file does not contain valid operations data.",
   "stateTransfer.invalidPeriodic": "The file does not contain valid periodic operations data.",
-  "stateTransfer.importSuccess": "Selected data imported successfully. Existing data in selected datasets has been replaced."
+  "stateTransfer.importSuccess": "Selected data imported successfully. Existing data in selected datasets has been replaced.",
+  "stateTransfer.exportTitle": "What would you like to export?",
+  "stateTransfer.importTitle": "What would you like to import?",
+  "stateTransfer.operations": "Operations",
+  "stateTransfer.periodicOperations": "Periodic operations",
+  "stateTransfer.selectAtLeastOne": "Select at least one data set.",
+  "stateTransfer.selectFile": "Please select a JSON file first.",
+  "stateTransfer.selectedFile": "File: {{name}}",
+  "stateTransfer.replaceWarning": "Selected datasets will be completely replaced with data from the file."
 }
