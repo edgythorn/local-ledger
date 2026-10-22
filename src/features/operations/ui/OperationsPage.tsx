@@ -191,7 +191,7 @@ export function OperationsPage() {
     }
 
     if (form.type === 'actual') {
-      const blocking = overdue.filter((operation) => operation.date <= form.date);
+      const blocking = overdue.filter((operation) => operation.id !== editingOperationId && operation.date <= form.date);
       if (blocking.length) {
         setError(t('operations.blocked', { count: blocking.length, date: dateFormatter.format(new Date(`${blocking[0].date}T12:00:00`)) }));
         return;
