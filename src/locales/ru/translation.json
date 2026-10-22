@@ -70,5 +70,7 @@
   "operations.monthExpenses": "Расход",
   "operations.beforeOpeningDate": "Дата операции не может быть раньше начала учёта ({{date}}).",
   "operations.plannedMustBeFuture": "Запланированную операцию можно создать только на сегодня или будущую дату.",
-  "operations.openingDateAfterOperation": "Дата начала учёта не может быть позже существующей операции от {{date}}."
+  "operations.openingDateAfterOperation": "Дата начала учёта не может быть позже существующей операции от {{date}}.",
+  "operations.editOperation": "Редактировать операцию",
+  "operations.confirmDelete": "Удалить операцию «{{description}}»? Это действие нельзя отменить."
 }
