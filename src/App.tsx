@@ -3,19 +3,20 @@ import './index.css';
 import './i18n';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
-import { Operations } from './components/Operations';
 import { Reports } from './components/Reports';
+import { OperationsPage } from './pages/operations/ui/OperationsPage';
+import { PeriodicOperationsPage } from './pages/periodic-operations/ui/PeriodicOperationsPage';
 
 export default function App() {
   return (
     <Router>
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+      <div className="flex h-screen bg-gray-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
         <Sidebar />
-
-        <main className="flex-1 p-8 overflow-y-auto">
+        <main className="min-h-0 min-w-0 flex-1 overflow-hidden p-4 md:p-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/operations" element={<Operations />} />
+            <Route path="/operations" element={<OperationsPage />} />
+            <Route path="/periodic-operations" element={<PeriodicOperationsPage />} />
             <Route path="/reports" element={<Reports />} />
           </Routes>
         </main>
