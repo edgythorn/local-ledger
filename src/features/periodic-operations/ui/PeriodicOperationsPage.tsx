@@ -62,7 +62,7 @@ export function PeriodicOperationsPage() {
       <form onSubmit={submit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
         <label className="grid gap-1 text-sm">{t('periodic.day')}<Input type="number" min={1} max={31} step={1} required value={form.day} onChange={(event) => setForm({ ...form, day: event.target.value })} /></label>
         <label className="grid gap-1 text-sm">{t('amount')}<Input type="number" step="any" required value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} /></label>
-        <label className="grid gap-1 text-sm">{t('description')}<Input required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
+        <label className="grid gap-1 text-sm">{t('description')}<Input required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} onBlur={() => setForm((current) => current.category.trim() ? current : { ...current, category: current.description.trim() })} /></label>
         <label className="grid gap-1 text-sm">{t('operations.category')}<Input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} /></label>
         <div className="flex items-end gap-2"><Button type="submit">{editingId ? t('save') : t('periodic.add')}</Button>{editingId && <Button type="button" variant="outline" onClick={() => { setEditingId(null); setForm(emptyForm()); setError(''); }}>{t('cancel')}</Button>}</div>
         {error && <p role="alert" className="text-sm text-destructive md:col-span-2 xl:col-span-5">{error}</p>}
