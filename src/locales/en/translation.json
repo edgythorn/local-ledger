@@ -72,5 +72,13 @@
   "operations.plannedMustBeFuture": "A planned operation cannot be created for a past date.",
   "operations.openingDateAfterOperation": "Ledger start date cannot be later than an existing operation dated {{date}}.",
   "operations.editOperation": "Edit operation",
-  "operations.confirmDelete": "Delete operation “{{description}}”? This cannot be undone."
+  "operations.confirmDelete": "Delete operation “{{description}}”? This cannot be undone.",
+  "stateTransfer.export": "Export JSON",
+  "stateTransfer.import": "Import JSON",
+  "stateTransfer.chooseDatasets": "Choose data: 1 — operations, 2 — periodic operations, 3 — both. Enter 1, 2, or 3.",
+  "stateTransfer.invalidChoice": "Invalid choice. Enter 1, 2, or 3.",
+  "stateTransfer.invalidFile": "Invalid LocalLedger state JSON file.",
+  "stateTransfer.invalidOperations": "The file does not contain valid operations data.",
+  "stateTransfer.invalidPeriodic": "The file does not contain valid periodic operations data.",
+  "stateTransfer.importSuccess": "Selected data imported successfully. Existing data in selected datasets has been replaced."
 }
