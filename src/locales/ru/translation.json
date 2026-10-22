@@ -72,5 +72,13 @@
   "operations.plannedMustBeFuture": "Запланированную операцию можно создать только на сегодня или будущую дату.",
   "operations.openingDateAfterOperation": "Дата начала учёта не может быть позже существующей операции от {{date}}.",
   "operations.editOperation": "Редактировать операцию",
-  "operations.confirmDelete": "Удалить операцию «{{description}}»? Это действие нельзя отменить."
+  "operations.confirmDelete": "Удалить операцию «{{description}}»? Это действие нельзя отменить.",
+  "stateTransfer.export": "Экспорт JSON",
+  "stateTransfer.import": "Импорт JSON",
+  "stateTransfer.chooseDatasets": "Выберите данные: 1 — операции, 2 — периодические операции, 3 — оба набора. Введите 1, 2 или 3.",
+  "stateTransfer.invalidChoice": "Неверный выбор. Введите 1, 2 или 3.",
+  "stateTransfer.invalidFile": "Некорректный JSON-файл состояния LocalLedger.",
+  "stateTransfer.invalidOperations": "В файле отсутствуют корректные данные операций.",
+  "stateTransfer.invalidPeriodic": "В файле отсутствуют корректные данные периодических операций.",
+  "stateTransfer.importSuccess": "Выбранные данные успешно загружены. Текущие данные выбранных наборов заменены."
 }
