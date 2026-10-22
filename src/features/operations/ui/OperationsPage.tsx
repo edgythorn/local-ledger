@@ -106,6 +106,14 @@ export function OperationsPage() {
       const datasets = (event as CustomEvent<{ datasets: string[] }>).detail?.datasets ?? [];
       if (datasets.includes('operations')) setOperations(getOperations());
       if (datasets.includes('periodicOperations')) setPeriodicRules(getPeriodicOperations());
+      if (datasets.includes('settings')) {
+        const nextSettings = getLedgerSettings();
+        setLedgerSettings(nextSettings);
+        setOpeningBalanceDraft(String(nextSettings.openingBalance));
+        setOpeningDateDraft(nextSettings.openingBalanceDate);
+        setShowOpeningBalance(false);
+        setShowReconcile(false);
+      }
       if (datasets.includes('operations')) setSelected([]);
     };
     window.addEventListener('local-ledger:state-imported', handleStateImported);
