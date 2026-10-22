@@ -80,5 +80,13 @@
   "stateTransfer.invalidFile": "Некорректный JSON-файл состояния LocalLedger.",
   "stateTransfer.invalidOperations": "В файле отсутствуют корректные данные операций.",
   "stateTransfer.invalidPeriodic": "В файле отсутствуют корректные данные периодических операций.",
-  "stateTransfer.importSuccess": "Выбранные данные успешно загружены. Текущие данные выбранных наборов заменены."
+  "stateTransfer.importSuccess": "Выбранные данные успешно загружены. Текущие данные выбранных наборов заменены.",
+  "stateTransfer.exportTitle": "Что экспортировать?",
+  "stateTransfer.importTitle": "Что импортировать?",
+  "stateTransfer.operations": "Операции",
+  "stateTransfer.periodicOperations": "Периодические операции",
+  "stateTransfer.selectAtLeastOne": "Выберите хотя бы один набор данных.",
+  "stateTransfer.selectFile": "Сначала выберите JSON-файл.",
+  "stateTransfer.selectedFile": "Файл: {{name}}",
+  "stateTransfer.replaceWarning": "Выбранные наборы будут полностью заменены данными из файла."
 }
