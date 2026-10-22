@@ -34,8 +34,13 @@ export function StateTransfer() {
     setIncludePeriodic(true);
     setIncludeSettings(true);
     setPendingFile(null);
-    setMode(nextMode);
-    if (nextMode === 'import') fileRef.current?.click();
+    if (fileRef.current) fileRef.current.value = '';
+    if (nextMode === 'import') {
+      setMode(null);
+      fileRef.current?.click();
+      return;
+    }
+    setMode('export');
   }
 
   function exportState(datasets: Dataset[]) {
