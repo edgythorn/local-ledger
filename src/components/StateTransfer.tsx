@@ -89,7 +89,6 @@ export function StateTransfer() {
       if (datasets.includes('periodicOperations')) savePeriodicOperations(data.periodicOperations!);
       if (datasets.includes('settings')) saveLedgerSettings(data.settings!);
       window.dispatchEvent(new CustomEvent('local-ledger:state-imported', { detail: { datasets } }));
-      window.alert(t('stateTransfer.importSuccess'));
       setMode(null);
       setPendingFile(null);
     } catch (error) {
