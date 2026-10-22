@@ -1,10 +1,79 @@
 # Local Ledger
 
-[Русский](#русский) | [English](#english)
+<a id="english"></a>
+[Русский](#русский)
+
+## English
+
+### About
+
+**Local Ledger** is a personal finance tracking and cash-flow planning application. It helps you track transactions, manage recurring payments, and forecast your future balance.
+
+**Local means your financial data stays with you.** The app stores transactions and settings in your browser's local storage and does not send financial data to an application server. JSON import and export are available for backups and transferring data between browsers.
+
+### Features
+
+- Track actual, planned, and adjustment transactions.
+- Create and manage recurring operations.
+- View a balance timeline with a forecast horizon that extends dynamically.
+- Confirm planned transactions.
+- Configure the opening balance and its effective date.
+- Reconcile balances, adjust discrepancies, and maintain reconciliation checkpoints.
+- Import and export selected datasets as JSON.
+
+### Tech Stack
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- i18next
+- LocalStorage for local data persistence
+
+### Installation and Usage
+
+**Run locally in development mode**
+
+Node.js and pnpm are required.
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Vite prints the local development server URL in the terminal.
+
+**Run with Docker**
+
+Docker and Docker Compose are required.
+
+```bash
+docker compose -f docker/docker-compose.yml up --build -d
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+**Production build**
+
+```bash
+pnpm build
+```
+
+### Data Storage and Privacy
+
+Transactions, recurring operations, and balance settings are stored in the current browser's LocalStorage. Server-side synchronization is not used. Clearing browser data may delete locally stored information, so export JSON backups regularly and keep them somewhere safe.
+
+Import replaces only the selected datasets; unselected datasets remain unchanged.
+
+### Project Status
+
+Local Ledger is an **evolving MVP**. Features and the user interface may change as development continues.
 
 ---
 
 <a id="русский"></a>
+[English](#english)
+
 ## Русский
 
 ### О проекте
@@ -72,70 +141,3 @@ pnpm build
 Local Ledger находится на стадии **MVP и активно развивается**. Возможности и интерфейс могут изменяться.
 
 ---
-
-<a id="english"></a>
-## English
-
-### About
-
-**Local Ledger** is a personal finance tracking and cash-flow planning application. It helps you track transactions, manage recurring payments, and forecast your future balance.
-
-**Local means your financial data stays with you.** The app stores transactions and settings in your browser's local storage and does not send financial data to an application server. JSON import and export are available for backups and transferring data between browsers.
-
-### Features
-
-- Track actual, planned, and adjustment transactions.
-- Create and manage recurring operations.
-- View a balance timeline with a forecast horizon that extends dynamically.
-- Confirm planned transactions.
-- Configure the opening balance and its effective date.
-- Reconcile balances, adjust discrepancies, and maintain reconciliation checkpoints.
-- Import and export selected datasets as JSON.
-
-### Tech Stack
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- i18next
-- LocalStorage for local data persistence
-
-### Installation and Usage
-
-**Run locally in development mode**
-
-Node.js and pnpm are required.
-
-```bash
-pnpm install
-pnpm dev
-```
-
-Vite prints the local development server URL in the terminal.
-
-**Run with Docker**
-
-Docker and Docker Compose are required.
-
-```bash
-docker compose -f docker/docker-compose.yml up --build -d
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-**Production build**
-
-```bash
-pnpm build
-```
-
-### Data Storage and Privacy
-
-Transactions, recurring operations, and balance settings are stored in the current browser's LocalStorage. Server-side synchronization is not used. Clearing browser data may delete locally stored information, so export JSON backups regularly and keep them somewhere safe.
-
-Import replaces only the selected datasets; unselected datasets remain unchanged.
-
-### Project Status
-
-Local Ledger is an **evolving MVP**. Features and the user interface may change as development continues.
