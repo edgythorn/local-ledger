@@ -21,7 +21,7 @@ function isLedgerSettings(value: unknown): value is LedgerSettings {
 }
 
 export function StateTransfer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<TransferMode | null>(null);
   const [includeOperations, setIncludeOperations] = useState(true);
@@ -79,7 +79,7 @@ export function StateTransfer() {
       const data = parsed as StateFile;
       if (datasets.includes('operations') && !isOperationList(data.operations)) throw new Error(t('stateTransfer.invalidOperations'));
       if (datasets.includes('periodicOperations') && !isPeriodicList(data.periodicOperations)) throw new Error(t('stateTransfer.invalidPeriodic'));
-      if (datasets.includes('settings') && !isLedgerSettings(data.settings)) throw new Error(t('stateTransfer.invalidSettings'));
+      if (datasets.includes('settings') && !isLedgerSettings(data.settings)) throw new Error(i18n.language.startsWith('ru') ? 'Некорректные настройки баланса или чекпоинты' : 'Invalid balance settings or checkpoints');
       if (datasets.includes('operations')) saveOperations(data.operations!);
       if (datasets.includes('periodicOperations')) savePeriodicOperations(data.periodicOperations!);
       if (datasets.includes('settings')) saveLedgerSettings(data.settings!);
@@ -107,7 +107,7 @@ export function StateTransfer() {
         <div className="mt-4 grid gap-3">
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={includeOperations} onChange={(event) => setIncludeOperations(event.target.checked)} />{t('stateTransfer.operations')}</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={includePeriodic} onChange={(event) => setIncludePeriodic(event.target.checked)} />{t('stateTransfer.periodicOperations')}</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={includeSettings} onChange={(event) => setIncludeSettings(event.target.checked)} />{t('stateTransfer.balanceSettings')}</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={includeSettings} onChange={(event) => setIncludeSettings(event.target.checked)} />{i18n.language.startsWith('ru') ? 'Начальный баланс и чекпоинты' : 'Opening balance and checkpoints'}</label>
         </div>
         {mode === 'import' && <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">{t('stateTransfer.replaceWarning')}</p>}
         <div className="mt-5 flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => { setMode(null); setPendingFile(null); if (fileRef.current) fileRef.current.value = ''; }}>{t('cancel')}</Button><Button type="button" onClick={() => void confirmTransfer()} disabled={mode === 'import' && !pendingFile}>{t(mode === 'export' ? 'stateTransfer.export' : 'stateTransfer.import')}</Button></div>
