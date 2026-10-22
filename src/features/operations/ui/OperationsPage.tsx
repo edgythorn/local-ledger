@@ -39,6 +39,7 @@ export function OperationsPage() {
   const [periodicRules] = useState(() => getPeriodicOperations());
   const [form, setForm] = useState<OperationFormState>(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [editingOperationId, setEditingOperationId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [reconcileBalance, setReconcileBalance] = useState('');
@@ -152,6 +153,25 @@ export function OperationsPage() {
     setSelected([]);
   }
 
+  function startEditing(operation: TimelineOperation) {
+    if (operation.virtual) return;
+    setEditingOperationId(operation.id);
+    setForm({ date: operation.date, amount: String(operation.amount), description: operation.description, type: operation.type, category: operation.category ?? '' });
+    setShowForm(true);
+    setError('');
+  }
+
+  function deleteOperation(operation: TimelineOperation) {
+    if (operation.virtual || !window.confirm(t('operations.confirmDelete', { description: operation.description }))) return;
+    persist(operations.filter((item) => item.id !== operation.id));
+    if (editingOperationId === operation.id) {
+      setEditingOperationId(null);
+      setForm(emptyForm());
+      setShowForm(false);
+    }
+    setSelected((current) => current.filter((id) => id !== operation.id));
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
@@ -178,14 +198,19 @@ export function OperationsPage() {
       }
     }
 
-    persist([...operations, {
-      id: createId('operation'),
+    const values = {
       date: form.date,
       amount,
       description: form.description.trim(),
       type: form.type,
       category: form.type === 'adjustment' ? undefined : form.category.trim() || undefined,
-    }]);
+    };
+    if (editingOperationId) {
+      persist(operations.map((operation) => operation.id === editingOperationId ? { ...operation, ...values } : operation));
+      setEditingOperationId(null);
+    } else {
+      persist([...operations, { id: createId('operation'), ...values }]);
+    }
     setForm(emptyForm());
     setShowForm(false);
   }
@@ -288,7 +313,7 @@ export function OperationsPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t('operations.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => { setShowForm((value) => !value); setError(''); }}>{t('operations.add')}</Button>
+          <Button onClick={() => { if (showForm) { setShowForm(false); setEditingOperationId(null); setForm(emptyForm()); } else { setShowForm(true); setEditingOperationId(null); setForm(emptyForm()); } setError(''); }}>{t('operations.add')}</Button>
         </div>
       </header>
 
@@ -315,6 +340,7 @@ export function OperationsPage() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="shrink-0 grid gap-3 rounded-lg border p-4 md:grid-cols-2 xl:grid-cols-5">
+          <p className="text-sm font-medium md:col-span-2 xl:col-span-5">{t(editingOperationId ? 'operations.editOperation' : 'operations.add')}</p>
           <label className="grid gap-1 text-sm">{t('date')}<Input type="date" min={form.type === 'planned' ? (today > ledgerSettings.openingBalanceDate ? today : ledgerSettings.openingBalanceDate) : ledgerSettings.openingBalanceDate} required value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label>
           <label className="grid gap-1 text-sm">{t('amount')}<Input type="number" step="any" required value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} /></label>
           <label className="grid gap-1 text-sm">{t('description')}<Input required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
@@ -322,14 +348,14 @@ export function OperationsPage() {
           <label className="grid gap-1 text-sm">{t('operations.category')}<Input disabled={form.type === 'adjustment'} value={form.type === 'adjustment' ? '' : form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} /></label>
           {form.type === 'adjustment' && <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-5">{t('operations.adjustmentHint')}</p>}
           {error && <p role="alert" className="text-sm text-destructive md:col-span-2 xl:col-span-5">{error}</p>}
-          <div className="flex gap-2 md:col-span-2 xl:col-span-5"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowForm(false); setError(''); }}>{t('cancel')}</Button></div>
+          <div className="flex gap-2 md:col-span-2 xl:col-span-5"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingOperationId(null); setForm(emptyForm()); setError(''); }}>{t('cancel')}</Button></div>
         </form>
       )}
 
       <div ref={scrollRef} onScroll={(event) => { const element = event.currentTarget; setScrollTop(element.scrollTop); if (element.scrollTop + element.clientHeight >= element.scrollHeight - 600) setForecastMonths((months) => months + 12); }} className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border">
-        <div className="min-w-[560px] text-sm">
-          <div className="sticky top-0 z-10 grid bg-muted font-semibold" style={{ gridTemplateColumns: '52px 104px minmax(100px, 1fr) 88px 96px' }}>
-            <div className="px-3 py-2">{t('status')}</div><div className="px-3 py-2">{t('date')}</div><div className="px-3 py-2">{t('description')}</div><div className="px-3 py-2 text-right">{t('amount')}</div><div className="px-3 py-2 text-right">{t('balance')}</div>
+        <div className="min-w-[640px] text-sm">
+          <div className="sticky top-0 z-10 grid bg-muted font-semibold" style={{ gridTemplateColumns: '52px 104px minmax(100px, 1fr) 88px 96px 80px' }}>
+            <div className="px-3 py-2">{t('status')}</div><div className="px-3 py-2">{t('date')}</div><div className="px-3 py-2">{t('description')}</div><div className="px-3 py-2 text-right">{t('amount')}</div><div className="px-3 py-2 text-right">{t('balance')}</div><div className="px-2 py-2">{t('actions')}</div>
           </div>
           <div style={{ height: rowOffsets.totalHeight, position: 'relative' }}>
             {virtualRows.slice(visibleStart, visibleEnd).map((row, visibleIndex) => {
@@ -342,11 +368,11 @@ export function OperationsPage() {
               </div>;
               if (row.kind === 'empty') return <div key={row.key} style={rowStyle} className="flex items-center justify-center text-muted-foreground">{t('operations.empty')}</div>;
               const operation = row.operation!;
-              return <div key={row.key} style={{ ...rowStyle, display: 'grid', gridTemplateColumns: '52px 104px minmax(100px, 1fr) 88px 96px', alignItems: 'center' }} className={`border-b transition-colors hover:bg-accent/70 ${operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+              return <div key={row.key} style={{ ...rowStyle, display: 'grid', gridTemplateColumns: '52px 104px minmax(100px, 1fr) 88px 96px 80px', alignItems: 'center' }} className={`border-b transition-colors hover:bg-accent/70 ${operation.type === 'planned' ? 'bg-blue-50/50 dark:bg-blue-950/20' : operation.type === 'adjustment' ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
                 <div className="flex items-center gap-1.5 px-3">{operation.type === 'actual' ? '✅' : operation.type === 'planned' ? '🕐' : '✏️'}<span className="sr-only">{t(`operations.${operation.type}`)}</span>{operation.type === 'planned' && operation.date <= today && <input className="m-0 h-3.5 w-3.5 shrink-0" aria-label={t('operations.select')} title={t('operations.select')} type="checkbox" checked={selected.includes(operation.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, operation.id] : current.filter((id) => id !== operation.id))} />}</div>
                 <div className="whitespace-nowrap px-3">{dateFormatter.format(new Date(`${operation.date}T12:00:00`))}</div>
                 <div className="min-w-0 overflow-hidden px-2"><div className="truncate" title={operation.description}>{operation.description}</div>{operation.category && <div className="truncate text-xs text-muted-foreground" title={operation.category}>{operation.category}</div>}</div>
-                <div className={`px-2 text-right tabular-nums ${operation.amount < 0 ? 'text-red-600' : operation.amount > 0 ? 'text-green-600' : ''}`}>{numberFormatter.format(operation.amount)}</div><div className={`px-2 text-right tabular-nums ${operation.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(operation.balance)}</div>
+                <div className={`px-2 text-right tabular-nums ${operation.amount < 0 ? 'text-red-600' : operation.amount > 0 ? 'text-green-600' : ''}`}>{numberFormatter.format(operation.amount)}</div><div className={`px-2 text-right tabular-nums ${operation.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{numberFormatter.format(operation.balance)}</div><div className="flex items-center gap-1 px-1">{!operation.virtual && <><Button size="sm" variant="ghost" className="h-7 px-2" aria-label={t('edit')} title={t('edit')} onClick={() => startEditing(operation)}>✎</Button><Button size="sm" variant="ghost" className="h-7 px-2 text-destructive" aria-label={t('delete')} title={t('delete')} onClick={() => deleteOperation(operation)}>×</Button></>}</div>
               </div>;
             })}
           </div>
