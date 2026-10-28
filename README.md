@@ -5,6 +5,10 @@
 
 ## English
 
+### Live Demo
+
+[Open the English version](https://plan.work.gd/?lang=en)
+
 ### About
 
 **Local Ledger** is a personal finance tracking and cash-flow planning application. It helps you track transactions, manage recurring payments, and forecast your future balance.
@@ -75,6 +79,10 @@ Local Ledger is an **evolving MVP**. Features and the user interface may change 
 [English](#english)
 
 ## Русский
+
+### Рабочая версия
+
+[Открыть русскую версию](https://plan.work.gd/?lang=ru)
 
 ### О проекте
 
