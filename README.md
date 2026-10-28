@@ -5,9 +5,7 @@
 
 ## English
 
-### Live Demo
-
-[Open the English version](https://plan.work.gd/?lang=en)
+🔗 **Live demo:** https://plan.work.gd/
 
 ### About
 
@@ -80,9 +78,7 @@ Local Ledger is an **evolving MVP**. Features and the user interface may change 
 
 ## Русский
 
-### Рабочая версия
-
-[Открыть русскую версию](https://plan.work.gd/?lang=ru)
+🔗 **Рабочая версия:** https://plan.work.gd/
 
 ### О проекте
 
