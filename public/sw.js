@@ -1,4 +1,4 @@
-const CACHE_NAME = 'local-ledger-pwa-v3';
+const CACHE_NAME = 'local-ledger-pwa-v4';
 const APP_BASE = new URL(self.registration.scope).pathname;
 const APP_SHELL = [
   './',
@@ -45,7 +45,16 @@ self.addEventListener('fetch', (event) => {
     if (request.mode === 'navigate') {
       try {
         const response = await fetch(request);
-        if (response.ok) await cache.put(APP_ENTRY, response.clone());
+        if (response.ok) {
+          await cache.put(APP_ENTRY, response.clone());
+          return response;
+        }
+
+        // GitHub Pages returns 404 for client-side routes; serve the app shell instead.
+        if (response.status === 404) {
+          return (await cache.match(APP_ENTRY)) ?? response;
+        }
+
         return response;
       } catch {
         const fallback = await cache.match(APP_ENTRY);
