@@ -4,7 +4,12 @@ import ru from './locales/ru/translation.json';
 import en from './locales/en/translation.json';
 
 const key = 'i18nextLng';
-const savedLang = localStorage.getItem(key) ?? 'en';
+const requestedLang = new URLSearchParams(window.location.search).get('lang');
+const savedLang = localStorage.getItem(key);
+const initialLang =
+  requestedLang === 'ru' || requestedLang === 'en'
+    ? requestedLang
+    : savedLang ?? 'en';
 
 i18n
   .use(initReactI18next)
@@ -13,7 +18,7 @@ i18n
       ru: { translation: ru },
       en: { translation: en },
     },
-    lng: savedLang,
+    lng: initialLang,
     fallbackLng: 'en',
     interpolation: { escapeValue: false },
   });
