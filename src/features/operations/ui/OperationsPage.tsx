@@ -47,6 +47,8 @@ export function OperationsPage() {
   const [reconcileBalance, setReconcileBalance] = useState('');
   const [showReconcile, setShowReconcile] = useState(false);
   const [showOpeningBalance, setShowOpeningBalance] = useState(false);
+  const [showActualBalanceDialog, setShowActualBalanceDialog] = useState(false);
+  const [actualBalanceDraft, setActualBalanceDraft] = useState('');
   const [openingBalanceDraft, setOpeningBalanceDraft] = useState(String(ledgerSettings.openingBalance));
   const [openingDateDraft, setOpeningDateDraft] = useState(ledgerSettings.openingBalanceDate);
   const [confirmOverdueDuringReconciliation, setConfirmOverdueDuringReconciliation] = useState(false);
@@ -60,6 +62,10 @@ export function OperationsPage() {
   const overdue = timeline.filter((operation) => operation.type === 'planned' && operation.date <= today);
   const projectedBalanceToday = timeline
     .filter((operation) => operation.date <= today)
+    .at(-1)?.balance ?? ledgerSettings.openingBalance;
+  const calculatedBalanceForForm = timeline
+    .filter((operation) => operation.id !== editingOperationId
+      && (operation.date < form.date || (operation.date === form.date && operation.type !== 'planned')))
     .at(-1)?.balance ?? ledgerSettings.openingBalance;
 
   const virtualRows = useMemo<VirtualRow[]>(() => {
@@ -439,12 +445,34 @@ export function OperationsPage() {
           <label className="grid gap-1 text-sm">{t('description')}<Input required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} onBlur={() => setForm((current) => current.category.trim() ? current : { ...current, category: current.description.trim() })} /></label>
           <label className="grid gap-1 text-sm">{t('operations.type')}<select className="h-9 rounded-md border bg-background px-3 text-sm" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as OperationType })}><option value="actual">{t('operations.actual')}</option><option value="planned">{t('operations.planned')}</option><option value="adjustment">{t('operations.adjustment')}</option></select></label>
           <label className="grid gap-1 text-sm">{t('operations.category')}<Input disabled={form.type === 'adjustment'} value={form.type === 'adjustment' ? '' : form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} /></label>
-          {form.type === 'adjustment' && <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-5">{t('operations.adjustmentHint')}</p>}
+          {form.type === 'adjustment' && <div className="text-sm text-muted-foreground md:col-span-2 xl:col-span-5">
+            <span>{t('operations.adjustmentHint')} </span>
+            <Button type="button" variant="link" className="h-auto p-0" onClick={() => { setActualBalanceDraft(String(calculatedBalanceForForm)); setShowActualBalanceDialog(true); }}>{t('operations.setActualBalance')}</Button>
+          </div>}
           {error && <p role="alert" className="text-sm text-destructive md:col-span-2 xl:col-span-5">{error}</p>}
           <div className="flex gap-2 md:col-span-2 xl:col-span-5"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingOperationId(null); setForm(emptyForm()); setError(''); }}>{t('cancel')}</Button></div>
         </form>
       )}
 
+      {showActualBalanceDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowActualBalanceDialog(false); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="actual-balance-title" className="w-full max-w-md rounded-lg border bg-background p-5 shadow-lg">
+            <h2 id="actual-balance-title" className="text-lg font-semibold">{t('operations.actualBalanceDialogTitle')}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t('operations.calculatedBalanceForDate', { balance: numberFormatter.format(calculatedBalanceForForm) })}</p>
+            <label className="mt-4 grid gap-1 text-sm">{t('operations.actualBalance')}<Input type="number" step="any" autoFocus value={actualBalanceDraft} onChange={(event) => setActualBalanceDraft(event.target.value)} /></label>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowActualBalanceDialog(false)}>{t('cancel')}</Button>
+              <Button type="button" onClick={() => {
+                const actual = Number(actualBalanceDraft);
+                if (actualBalanceDraft.trim() !== '' && Number.isFinite(actual)) {
+                  setForm((current) => ({ ...current, amount: String(actual - calculatedBalanceForForm) }));
+                  setShowActualBalanceDialog(false);
+                }
+              }}>{t('save')}</Button>
+            </div>
+          </section>
+        </div>
+      )}
       <div ref={scrollRef} onScroll={(event) => { const element = event.currentTarget; setScrollTop(element.scrollTop); if (element.scrollTop + element.clientHeight >= element.scrollHeight - 600) setForecastMonths((months) => months + 12); }} className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border">
         <div className="min-w-[640px] text-sm">
           <div className="sticky top-0 z-10 grid bg-muted font-semibold" style={{ gridTemplateColumns: '52px 64px minmax(100px, 1fr) 88px 96px 80px' }}>
