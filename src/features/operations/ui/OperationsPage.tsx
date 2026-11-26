@@ -67,6 +67,7 @@ export function OperationsPage() {
     .filter((operation) => operation.id !== editingOperationId
       && (operation.date < form.date || (operation.date === form.date && operation.type !== 'planned')))
     .at(-1)?.balance ?? ledgerSettings.openingBalance;
+  const lastCheckpoint = [...ledgerSettings.checkpoints].sort((a, b) => a.date.localeCompare(b.date)).at(-1);
 
   const virtualRows = useMemo<VirtualRow[]>(() => {
     if (timeline.length === 0) return [{ key: 'empty', kind: 'empty', height: 64 }];
@@ -378,8 +379,8 @@ export function OperationsPage() {
         <div>
           <p className="text-sm text-muted-foreground">{t('operations.currentBalance')}</p>
           <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
-          {ledgerSettings.checkpoints.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].date + 'T12:00:00')), balance: numberFormatter.format(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].actualBalance) })}</p>}
-          {ledgerSettings.checkpoints.length === 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
+          {lastCheckpoint && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(lastCheckpoint.date + 'T12:00:00')), balance: numberFormatter.format(lastCheckpoint.actualBalance) })}</p>}
+          {!lastCheckpoint && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
           <Button className="mt-2 h-auto cursor-pointer px-0 py-1 text-xs" variant="link" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }}>{t('operations.editOpeningBalance')}</Button>
         </div>
         <div className="flex gap-2">
