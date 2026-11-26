@@ -309,7 +309,9 @@ export function OperationsPage() {
       return;
     }
     const nextSettings = { ...ledgerSettings, openingBalance, openingBalanceDate: openingDateDraft };
-    setLedgerSettings(nextSettings); saveLedgerSettings(nextSettings); setShowOpeningBalance(false); setError('');
+    if (!persist(operations, nextSettings)) return;
+    setShowOpeningBalance(false);
+    setError('');
   }
 
   function saveReconciliation(event: FormEvent<HTMLFormElement>) {
