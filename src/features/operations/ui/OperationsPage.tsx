@@ -252,12 +252,49 @@ export function OperationsPage() {
       type: form.type,
       category: form.type === 'adjustment' ? undefined : form.category.trim() || undefined,
     };
-    if (editingOperationId) {
-      persist(operations.map((operation) => operation.id === editingOperationId ? { ...operation, ...values } : operation));
-      setEditingOperationId(null);
-    } else {
-      persist([...operations, { id: createId('operation'), ...values }]);
+    const editingOperation = operations.find((operation) => operation.id === editingOperationId);
+    const operationId = editingOperationId ?? createId(form.type === 'adjustment' ? 'adjustment' : 'operation');
+    const nextOperation: Operation = { ...(editingOperation ?? { id: operationId }), ...values };
+    const nextOperations = editingOperationId
+      ? operations.map((operation) => operation.id === editingOperationId ? nextOperation : operation)
+      : [...operations, nextOperation];
+    let nextSettings = ledgerSettings;
+    const existingCheckpoint = ledgerSettings.checkpoints.find((checkpoint) => checkpoint.operationId === operationId);
+
+    if (form.type === 'adjustment') {
+      if (existingCheckpoint) {
+        const amountDelta = amount - (editingOperation?.amount ?? amount);
+        nextSettings = {
+          ...ledgerSettings,
+          checkpoints: ledgerSettings.checkpoints.map((checkpoint) => checkpoint.operationId === operationId
+            ? { ...checkpoint, date: form.date, actualBalance: checkpoint.actualBalance + amountDelta }
+            : checkpoint),
+        };
+      } else {
+        const beforeBalance = timeline
+          .filter((item) => item.id !== editingOperationId && (item.date < form.date || (item.date === form.date && item.type !== 'planned')))
+          .at(-1)?.balance ?? (form.date < ledgerSettings.openingBalanceDate ? 0 : ledgerSettings.openingBalance);
+        const checkpoint = {
+          id: createId('checkpoint'),
+          operationId,
+          date: form.date,
+          actualBalance: beforeBalance + amount,
+          calculatedBalance: beforeBalance,
+          difference: amount,
+        };
+        nextSettings = { ...ledgerSettings, checkpoints: [...ledgerSettings.checkpoints, checkpoint] };
+      }
+    } else if (existingCheckpoint) {
+      nextSettings = {
+        ...ledgerSettings,
+        checkpoints: ledgerSettings.checkpoints.filter((checkpoint) => checkpoint.operationId !== operationId),
+      };
     }
+
+    if (!persist(nextOperations, nextSettings, existingCheckpoint && form.type !== 'adjustment'
+      ? t('operations.confirmRemoveCheckpoint')
+      : undefined)) return;
+    setEditingOperationId(null);
     setForm(emptyForm());
     setShowForm(false);
   }
