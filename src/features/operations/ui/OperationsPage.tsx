@@ -338,18 +338,24 @@ export function OperationsPage() {
         });
       }
     }
+    const adjustmentId = createId('adjustment');
     next.push({
-      id: createId('adjustment'),
+      id: adjustmentId,
       date: today,
       amount: delta,
       description: t('operations.balanceAdjustment'),
       type: 'adjustment',
     });
-    persist(next);
-    const checkpoint = { id: createId('checkpoint'), date: today, actualBalance, calculatedBalance: projectedBalanceToday, difference: delta };
+    const checkpoint = {
+      id: createId('checkpoint'),
+      operationId: adjustmentId,
+      date: today,
+      actualBalance,
+      calculatedBalance: projectedBalanceToday,
+      difference: delta,
+    };
     const nextSettings = { ...ledgerSettings, checkpoints: [...ledgerSettings.checkpoints, checkpoint] };
-    setLedgerSettings(nextSettings);
-    saveLedgerSettings(nextSettings);
+    if (!persist(next, nextSettings)) return;
     setShowReconcile(false);
     setReconcileBalance('');
     setConfirmOverdueDuringReconciliation(false);
