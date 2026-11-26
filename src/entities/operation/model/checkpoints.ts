@@ -15,8 +15,9 @@ export function recalculateCheckpointAdjustments(
   operations: Operation[],
   settings: LedgerSettings,
 ): { operations: Operation[]; settings: LedgerSettings } {
+  const nextCheckpoints = settings.checkpoints.map((checkpoint) => ({ ...checkpoint }));
   const checkpointsByOperationId = new Map(
-    settings.checkpoints
+    nextCheckpoints
       .filter((checkpoint): checkpoint is BalanceCheckpoint & { operationId: string } => Boolean(checkpoint.operationId))
       .map((checkpoint) => [checkpoint.operationId, checkpoint]),
   );
@@ -55,6 +56,6 @@ export function recalculateCheckpointAdjustments(
   const nextById = new Map(nextOperations.map((operation) => [operation.id, operation]));
   return {
     operations: operations.map((operation) => nextById.get(operation.id) ?? operation),
-    settings: { ...settings, checkpoints: settings.checkpoints.map((checkpoint) => ({ ...checkpoint })) },
+    settings: { ...settings, checkpoints: nextCheckpoints },
   };
 }
