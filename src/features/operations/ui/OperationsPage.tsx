@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { StateTransfer } from '../../../components/StateTransfer';
 import { buildTimeline } from '../../../entities/operation/model/timeline';
+import { recalculateCheckpointAdjustments } from '../../../entities/operation/model/checkpoints';
 import { localDateString } from '../../../entities/operation/model/dates';
 import {
   createId,
@@ -150,9 +151,24 @@ export function OperationsPage() {
     [i18n.language],
   );
 
-  function persist(next: Operation[]) {
-    setOperations(next);
-    saveOperations(next);
+  function persist(next: Operation[], nextSettings = ledgerSettings, confirmationPrefix?: string): boolean {
+    const result = recalculateCheckpointAdjustments(next, nextSettings);
+    const previousAmounts = new Map(operations.map((operation) => [operation.id, operation.amount]));
+    const changes = result.operations
+      .filter((operation) => operation.type === 'adjustment' && previousAmounts.has(operation.id) && previousAmounts.get(operation.id) !== operation.amount)
+      .map((operation) => {
+        const previous = previousAmounts.get(operation.id)!;
+        return `${operation.date}: ${numberFormatter.format(previous)} → ${numberFormatter.format(operation.amount)}`;
+      });
+    const message = [confirmationPrefix, changes.length ? t('operations.checkpointRecalculationConfirm', { changes: changes.join('; ') }) : '']
+      .filter(Boolean).join('\n\n');
+    if (message && !window.confirm(message)) return false;
+
+    setOperations(result.operations);
+    saveOperations(result.operations);
+    setLedgerSettings(result.settings);
+    saveLedgerSettings(result.settings);
+    return true;
   }
 
   function confirmPlanned(items: TimelineOperation[]) {
@@ -186,8 +202,15 @@ export function OperationsPage() {
   }
 
   function deleteOperation(operation: TimelineOperation) {
-    if (operation.virtual || !window.confirm(t('operations.confirmDelete', { description: operation.description }))) return;
-    persist(operations.filter((item) => item.id !== operation.id));
+    if (operation.virtual) return;
+    const linkedCheckpoint = ledgerSettings.checkpoints.find((checkpoint) => checkpoint.operationId === operation.id);
+    const nextSettings = linkedCheckpoint
+      ? { ...ledgerSettings, checkpoints: ledgerSettings.checkpoints.filter((checkpoint) => checkpoint.operationId !== operation.id) }
+      : ledgerSettings;
+    const confirmation = linkedCheckpoint
+      ? t('operations.confirmDeleteAdjustment', { description: operation.description, date: operation.date })
+      : t('operations.confirmDelete', { description: operation.description });
+    if (!persist(operations.filter((item) => item.id !== operation.id), nextSettings, confirmation)) return;
     if (editingOperationId === operation.id) {
       setEditingOperationId(null);
       setForm(emptyForm());
