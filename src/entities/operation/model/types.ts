@@ -30,6 +30,7 @@ export interface BalanceCheckpoint {
   actualBalance: number;
   calculatedBalance: number;
   difference: number;
+  operationId?: string;
 }
 
 export interface LedgerSettings {
