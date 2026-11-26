@@ -88,5 +88,11 @@
   "stateTransfer.selectAtLeastOne": "Select at least one data set.",
   "stateTransfer.selectFile": "Please select a JSON file first.",
   "stateTransfer.selectedFile": "File: {{name}}",
-  "stateTransfer.replaceWarning": "Selected datasets will be completely replaced with data from the file."
+  "stateTransfer.replaceWarning": "Selected datasets will be completely replaced with data from the file.",
+  "operations.setActualBalance": "Set actual balance",
+  "operations.actualBalanceDialogTitle": "Set actual balance",
+  "operations.calculatedBalanceForDate": "Calculated balance on the selected date: {{balance}}",
+  "operations.checkpointRecalculationConfirm": "This change will update adjustment amounts: {{changes}}. Continue?",
+  "operations.confirmDeleteAdjustment": "Delete adjustment “{{description}}” dated {{date}} and remove its balance checkpoint? Later checkpoint balances will remain fixed, but their adjustment amounts may change.",
+  "operations.confirmRemoveCheckpoint": "This operation has a fixed balance checkpoint. Changing its type will remove that checkpoint. Continue?"
 }

@@ -88,5 +88,11 @@
   "stateTransfer.selectAtLeastOne": "Выберите хотя бы один набор данных.",
   "stateTransfer.selectFile": "Сначала выберите JSON-файл.",
   "stateTransfer.selectedFile": "Файл: {{name}}",
-  "stateTransfer.replaceWarning": "Выбранные наборы будут полностью заменены данными из файла."
+  "stateTransfer.replaceWarning": "Выбранные наборы будут полностью заменены данными из файла.",
+  "operations.setActualBalance": "Указать актуальный баланс",
+  "operations.actualBalanceDialogTitle": "Указать актуальный баланс",
+  "operations.calculatedBalanceForDate": "Расчётный баланс на выбранную дату: {{balance}}",
+  "operations.checkpointRecalculationConfirm": "Изменение повлияет на суммы корректировок: {{changes}}. Подтвердить?",
+  "operations.confirmDeleteAdjustment": "Удалить корректировку «{{description}}» от {{date}} и снять фиксацию баланса? Балансы последующих контрольных точек сохранятся, суммы их корректировок могут измениться.",
+  "operations.confirmRemoveCheckpoint": "У этой операции есть зафиксированный баланс. Изменение типа операции удалит контрольную точку. Продолжить?"
 }

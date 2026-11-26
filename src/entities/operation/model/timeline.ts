@@ -27,7 +27,19 @@ export function buildTimeline(
   const startDate = earliestSavedDate && earliestSavedDate < settings.openingBalanceDate
     ? earliestSavedDate
     : settings.openingBalanceDate;
-  const start = new Date(`${startDate}T12:00:00`);
+  const linkedAdjustmentIds = new Set(
+    savedOperations.filter((operation) => operation.type === 'adjustment').map((operation) => operation.id),
+  );
+  const latestCheckpointDate = settings.checkpoints
+    .filter((checkpoint) => checkpoint.operationId && linkedAdjustmentIds.has(checkpoint.operationId))
+    .reduce<string | undefined>(
+      (latest, checkpoint) => !latest || checkpoint.date > latest ? checkpoint.date : latest,
+      undefined,
+    );
+  const generationStart = latestCheckpointDate
+    ? localDateString(new Date(new Date(`${latestCheckpointDate}T12:00:00`).getTime() + 24 * 60 * 60 * 1000))
+    : startDate;
+  const start = new Date(`${generationStart}T12:00:00`);
   const end = new Date(now.getFullYear(), now.getMonth() + forecastMonths, 1);
   const confirmedOccurrences = new Set(
     savedOperations
@@ -39,7 +51,7 @@ export function buildTimeline(
   for (let cursor = new Date(start.getFullYear(), start.getMonth(), 1); cursor <= end; cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)) {
     for (const rule of periodicRules) {
       const occurrenceDate = dateAtMonthDay(cursor.getFullYear(), cursor.getMonth(), rule.day);
-      if (occurrenceDate < startDate || confirmedOccurrences.has(`${rule.id}:${occurrenceDate}`)) continue;
+      if (occurrenceDate < generationStart || confirmedOccurrences.has(`${rule.id}:${occurrenceDate}`)) continue;
       all.push({
         id: `virtual:${rule.id}:${occurrenceDate}`,
         date: occurrenceDate,

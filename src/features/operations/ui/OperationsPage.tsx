@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { StateTransfer } from '../../../components/StateTransfer';
 import { buildTimeline } from '../../../entities/operation/model/timeline';
+import { recalculateCheckpointAdjustments } from '../../../entities/operation/model/checkpoints';
 import { localDateString } from '../../../entities/operation/model/dates';
 import {
   createId,
@@ -46,6 +47,8 @@ export function OperationsPage() {
   const [reconcileBalance, setReconcileBalance] = useState('');
   const [showReconcile, setShowReconcile] = useState(false);
   const [showOpeningBalance, setShowOpeningBalance] = useState(false);
+  const [showActualBalanceDialog, setShowActualBalanceDialog] = useState(false);
+  const [actualBalanceDraft, setActualBalanceDraft] = useState('');
   const [openingBalanceDraft, setOpeningBalanceDraft] = useState(String(ledgerSettings.openingBalance));
   const [openingDateDraft, setOpeningDateDraft] = useState(ledgerSettings.openingBalanceDate);
   const [confirmOverdueDuringReconciliation, setConfirmOverdueDuringReconciliation] = useState(false);
@@ -60,6 +63,11 @@ export function OperationsPage() {
   const projectedBalanceToday = timeline
     .filter((operation) => operation.date <= today)
     .at(-1)?.balance ?? ledgerSettings.openingBalance;
+  const calculatedBalanceForForm = timeline
+    .filter((operation) => operation.id !== editingOperationId
+      && (operation.date < form.date || (operation.date === form.date && operation.type !== 'planned')))
+    .at(-1)?.balance ?? ledgerSettings.openingBalance;
+  const lastCheckpoint = [...ledgerSettings.checkpoints].sort((a, b) => a.date.localeCompare(b.date)).at(-1);
 
   const virtualRows = useMemo<VirtualRow[]>(() => {
     if (timeline.length === 0) return [{ key: 'empty', kind: 'empty', height: 64 }];
@@ -150,9 +158,24 @@ export function OperationsPage() {
     [i18n.language],
   );
 
-  function persist(next: Operation[]) {
-    setOperations(next);
-    saveOperations(next);
+  function persist(next: Operation[], nextSettings = ledgerSettings, confirmationPrefix?: string): boolean {
+    const result = recalculateCheckpointAdjustments(next, nextSettings);
+    const previousAmounts = new Map(operations.map((operation) => [operation.id, operation.amount]));
+    const changes = result.operations
+      .filter((operation) => operation.type === 'adjustment' && previousAmounts.has(operation.id) && previousAmounts.get(operation.id) !== operation.amount)
+      .map((operation) => {
+        const previous = previousAmounts.get(operation.id)!;
+        return `${operation.date}: ${numberFormatter.format(previous)} → ${numberFormatter.format(operation.amount)}`;
+      });
+    const message = [confirmationPrefix, changes.length ? t('operations.checkpointRecalculationConfirm', { changes: changes.join('; ') }) : '']
+      .filter(Boolean).join('\n\n');
+    if (message && !window.confirm(message)) return false;
+
+    setOperations(result.operations);
+    saveOperations(result.operations);
+    setLedgerSettings(result.settings);
+    saveLedgerSettings(result.settings);
+    return true;
   }
 
   function confirmPlanned(items: TimelineOperation[]) {
@@ -186,8 +209,15 @@ export function OperationsPage() {
   }
 
   function deleteOperation(operation: TimelineOperation) {
-    if (operation.virtual || !window.confirm(t('operations.confirmDelete', { description: operation.description }))) return;
-    persist(operations.filter((item) => item.id !== operation.id));
+    if (operation.virtual) return;
+    const linkedCheckpoint = ledgerSettings.checkpoints.find((checkpoint) => checkpoint.operationId === operation.id);
+    const nextSettings = linkedCheckpoint
+      ? { ...ledgerSettings, checkpoints: ledgerSettings.checkpoints.filter((checkpoint) => checkpoint.operationId !== operation.id) }
+      : ledgerSettings;
+    const confirmation = linkedCheckpoint
+      ? t('operations.confirmDeleteAdjustment', { description: operation.description, date: operation.date })
+      : t('operations.confirmDelete', { description: operation.description });
+    if (!persist(operations.filter((item) => item.id !== operation.id), nextSettings, confirmation)) return;
     if (editingOperationId === operation.id) {
       setEditingOperationId(null);
       setForm(emptyForm());
@@ -229,12 +259,49 @@ export function OperationsPage() {
       type: form.type,
       category: form.type === 'adjustment' ? undefined : form.category.trim() || undefined,
     };
-    if (editingOperationId) {
-      persist(operations.map((operation) => operation.id === editingOperationId ? { ...operation, ...values } : operation));
-      setEditingOperationId(null);
-    } else {
-      persist([...operations, { id: createId('operation'), ...values }]);
+    const editingOperation = operations.find((operation) => operation.id === editingOperationId);
+    const operationId = editingOperationId ?? createId(form.type === 'adjustment' ? 'adjustment' : 'operation');
+    const nextOperation: Operation = { ...(editingOperation ?? { id: operationId }), ...values };
+    const nextOperations = editingOperationId
+      ? operations.map((operation) => operation.id === editingOperationId ? nextOperation : operation)
+      : [...operations, nextOperation];
+    let nextSettings = ledgerSettings;
+    const existingCheckpoint = ledgerSettings.checkpoints.find((checkpoint) => checkpoint.operationId === operationId);
+
+    if (form.type === 'adjustment') {
+      if (existingCheckpoint) {
+        const amountDelta = amount - (editingOperation?.amount ?? amount);
+        nextSettings = {
+          ...ledgerSettings,
+          checkpoints: ledgerSettings.checkpoints.map((checkpoint) => checkpoint.operationId === operationId
+            ? { ...checkpoint, date: form.date, actualBalance: checkpoint.actualBalance + amountDelta }
+            : checkpoint),
+        };
+      } else {
+        const beforeBalance = timeline
+          .filter((item) => item.id !== editingOperationId && (item.date < form.date || (item.date === form.date && item.type !== 'planned')))
+          .at(-1)?.balance ?? (form.date < ledgerSettings.openingBalanceDate ? 0 : ledgerSettings.openingBalance);
+        const checkpoint = {
+          id: createId('checkpoint'),
+          operationId,
+          date: form.date,
+          actualBalance: beforeBalance + amount,
+          calculatedBalance: beforeBalance,
+          difference: amount,
+        };
+        nextSettings = { ...ledgerSettings, checkpoints: [...ledgerSettings.checkpoints, checkpoint] };
+      }
+    } else if (existingCheckpoint) {
+      nextSettings = {
+        ...ledgerSettings,
+        checkpoints: ledgerSettings.checkpoints.filter((checkpoint) => checkpoint.operationId !== operationId),
+      };
     }
+
+    if (!persist(nextOperations, nextSettings, existingCheckpoint && form.type !== 'adjustment'
+      ? t('operations.confirmRemoveCheckpoint')
+      : undefined)) return;
+    setEditingOperationId(null);
     setForm(emptyForm());
     setShowForm(false);
   }
@@ -249,7 +316,9 @@ export function OperationsPage() {
       return;
     }
     const nextSettings = { ...ledgerSettings, openingBalance, openingBalanceDate: openingDateDraft };
-    setLedgerSettings(nextSettings); saveLedgerSettings(nextSettings); setShowOpeningBalance(false); setError('');
+    if (!persist(operations, nextSettings)) return;
+    setShowOpeningBalance(false);
+    setError('');
   }
 
   function saveReconciliation(event: FormEvent<HTMLFormElement>) {
@@ -278,18 +347,24 @@ export function OperationsPage() {
         });
       }
     }
+    const adjustmentId = createId('adjustment');
     next.push({
-      id: createId('adjustment'),
+      id: adjustmentId,
       date: today,
       amount: delta,
       description: t('operations.balanceAdjustment'),
       type: 'adjustment',
     });
-    persist(next);
-    const checkpoint = { id: createId('checkpoint'), date: today, actualBalance, calculatedBalance: projectedBalanceToday, difference: delta };
+    const checkpoint = {
+      id: createId('checkpoint'),
+      operationId: adjustmentId,
+      date: today,
+      actualBalance,
+      calculatedBalance: projectedBalanceToday,
+      difference: delta,
+    };
     const nextSettings = { ...ledgerSettings, checkpoints: [...ledgerSettings.checkpoints, checkpoint] };
-    setLedgerSettings(nextSettings);
-    saveLedgerSettings(nextSettings);
+    if (!persist(next, nextSettings)) return;
     setShowReconcile(false);
     setReconcileBalance('');
     setConfirmOverdueDuringReconciliation(false);
@@ -304,8 +379,8 @@ export function OperationsPage() {
         <div>
           <p className="text-sm text-muted-foreground">{t('operations.currentBalance')}</p>
           <p className="text-2xl font-semibold tabular-nums">{numberFormatter.format(projectedBalanceToday)}</p>
-          {ledgerSettings.checkpoints.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].date + 'T12:00:00')), balance: numberFormatter.format(ledgerSettings.checkpoints[ledgerSettings.checkpoints.length - 1].actualBalance) })}</p>}
-          {ledgerSettings.checkpoints.length === 0 && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
+          {lastCheckpoint && <p className="mt-1 text-xs text-muted-foreground">{t('operations.lastConfirmed', { date: dateFormatter.format(new Date(lastCheckpoint.date + 'T12:00:00')), balance: numberFormatter.format(lastCheckpoint.actualBalance) })}</p>}
+          {!lastCheckpoint && <p className="mt-1 text-xs text-muted-foreground">{t('operations.openingBalanceLabel', { date: dateFormatter.format(new Date(ledgerSettings.openingBalanceDate + 'T12:00:00')) })}</p>}
           <Button className="mt-2 h-auto cursor-pointer px-0 py-1 text-xs" variant="link" onClick={() => { setOpeningBalanceDraft(String(ledgerSettings.openingBalance)); setOpeningDateDraft(ledgerSettings.openingBalanceDate); setShowReconcile(false); setShowOpeningBalance((value) => !value); setError(''); }}>{t('operations.editOpeningBalance')}</Button>
         </div>
         <div className="flex gap-2">
@@ -371,12 +446,34 @@ export function OperationsPage() {
           <label className="grid gap-1 text-sm">{t('description')}<Input required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} onBlur={() => setForm((current) => current.category.trim() ? current : { ...current, category: current.description.trim() })} /></label>
           <label className="grid gap-1 text-sm">{t('operations.type')}<select className="h-9 rounded-md border bg-background px-3 text-sm" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as OperationType })}><option value="actual">{t('operations.actual')}</option><option value="planned">{t('operations.planned')}</option><option value="adjustment">{t('operations.adjustment')}</option></select></label>
           <label className="grid gap-1 text-sm">{t('operations.category')}<Input disabled={form.type === 'adjustment'} value={form.type === 'adjustment' ? '' : form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} /></label>
-          {form.type === 'adjustment' && <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-5">{t('operations.adjustmentHint')}</p>}
+          {form.type === 'adjustment' && <div className="text-sm text-muted-foreground md:col-span-2 xl:col-span-5">
+            <span>{t('operations.adjustmentHint')} </span>
+            <Button type="button" variant="link" className="h-auto p-0" onClick={() => { setActualBalanceDraft(String(calculatedBalanceForForm)); setShowActualBalanceDialog(true); }}>{t('operations.setActualBalance')}</Button>
+          </div>}
           {error && <p role="alert" className="text-sm text-destructive md:col-span-2 xl:col-span-5">{error}</p>}
           <div className="flex gap-2 md:col-span-2 xl:col-span-5"><Button type="submit">{t('save')}</Button><Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingOperationId(null); setForm(emptyForm()); setError(''); }}>{t('cancel')}</Button></div>
         </form>
       )}
 
+      {showActualBalanceDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowActualBalanceDialog(false); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="actual-balance-title" className="w-full max-w-md rounded-lg border bg-background p-5 shadow-lg">
+            <h2 id="actual-balance-title" className="text-lg font-semibold">{t('operations.actualBalanceDialogTitle')}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t('operations.calculatedBalanceForDate', { balance: numberFormatter.format(calculatedBalanceForForm) })}</p>
+            <label className="mt-4 grid gap-1 text-sm">{t('operations.actualBalance')}<Input type="number" step="any" autoFocus value={actualBalanceDraft} onChange={(event) => setActualBalanceDraft(event.target.value)} /></label>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowActualBalanceDialog(false)}>{t('cancel')}</Button>
+              <Button type="button" onClick={() => {
+                const actual = Number(actualBalanceDraft);
+                if (actualBalanceDraft.trim() !== '' && Number.isFinite(actual)) {
+                  setForm((current) => ({ ...current, amount: String(actual - calculatedBalanceForForm) }));
+                  setShowActualBalanceDialog(false);
+                }
+              }}>{t('save')}</Button>
+            </div>
+          </section>
+        </div>
+      )}
       <div ref={scrollRef} onScroll={(event) => { const element = event.currentTarget; setScrollTop(element.scrollTop); if (element.scrollTop + element.clientHeight >= element.scrollHeight - 600) setForecastMonths((months) => months + 12); }} className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border">
         <div className="min-w-[640px] text-sm">
           <div className="sticky top-0 z-10 grid bg-muted font-semibold" style={{ gridTemplateColumns: '52px 64px minmax(100px, 1fr) 88px 96px 80px' }}>
